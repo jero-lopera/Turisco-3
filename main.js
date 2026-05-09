@@ -14,11 +14,15 @@ const API_KEY_CLIMA = '8fe318cf34b450bc6643ce5daecb4da3';
 // ✅ PASO 3 — Hora local en tiempo real
 // =============================================
 function actualizarHora() {
-  const horaFormateada = new Date().toLocaleTimeString('es-CO', {
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
-  });
-  const el = document.getElementById('hora-actual');
-  if (el) el.textContent = '🕒 ' + horaFormateada;
+  try {
+    const horaFormateada = new Date().toLocaleTimeString('es-CO', {
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+    });
+    const el = document.getElementById('hora-actual');
+    if (el) el.textContent = '🕒 ' + horaFormateada;
+  } catch (e) {
+    console.error('Error actualizando hora:', e);
+  }
 }
 actualizarHora();
 setInterval(actualizarHora, 1000);
@@ -44,12 +48,23 @@ function detectarUbicacion() {
       fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json')
         .then(r => r.json())
         .then(data => {
-          const ciudad = data.address.city || data.address.town || data.address.village || 'Tu ciudad';
-          if (el) el.textContent = ciudad;
+          // Validar que data y data.address existan
+          if (data && data.address) {
+            const ciudad = data.address.city || data.address.town || data.address.village || 'Tu ciudad';
+            if (el) el.textContent = ciudad;
+          } else {
+            if (el) el.textContent = 'Tu ubicación';
+          }
         })
-        .catch(() => { if (el) el.textContent = 'Tu ubicación'; });
+        .catch(err => { 
+          console.error('Error detectando ubicación:', err);
+          if (el) el.textContent = 'Tu ubicación'; 
+        });
     },
-    function () { if (el) el.textContent = 'Medellín'; }
+    function (err) { 
+      console.error('Geolocation error:', err);
+      if (el) el.textContent = 'Medellín'; 
+    }
   );
 }
 
@@ -81,9 +96,15 @@ function obtenerClimaUbicacion(lat, lon) {
   fetch('https://api.openweathermap.org/data/2.5/weather?lat=' + lat + '&lon=' + lon + '&appid=' + API_KEY_CLIMA + '&units=metric&lang=es')
     .then(r => r.json())
     .then(data => {
+      // Validar que data.main y data.weather existan
+      if (!data || !data.main || !data.weather || data.weather.length === 0) {
+        console.warn('Datos de clima incompletos');
+        return;
+      }
+
       const temp  = Math.round(data.main.temp);
       const id    = data.weather[0].id;
-      const desc  = data.weather[0].description;
+      const desc  = data.weather[0].description || 'Clima';
       const icono = obtenerIconoClima(id);
       const etiq  = obtenerEtiqueta(id);
 
@@ -94,19 +115,34 @@ function obtenerClimaUbicacion(lat, lon) {
 
       if (iconoEl) iconoEl.textContent = icono;
       if (descEl)  descEl.textContent  = temp + '°C · ' + desc;
-      if (tagEl)   { tagEl.textContent = etiq.texto; tagEl.className = 'clima-tag ' + etiq.clase; }
+      if (tagEl)   { 
+        tagEl.textContent = etiq.texto; 
+        tagEl.className = 'clima-tag ' + etiq.clase; 
+      }
     })
-    .catch(() => console.log('No se pudo obtener el clima de tu ubicación'));
+    .catch(err => console.error('No se pudo obtener el clima de tu ubicación:', err));
 }
 
 // Clima de una ciudad fija por nombre
 function obtenerClimaCiudad(ciudad, elementoId) {
-  fetch('https://api.openweathermap.org/data/2.5/weather?q=' + ciudad + '&appid=' + API_KEY_CLIMA + '&units=metric&lang=es')
+  // Validar que elementoId sea válido
+  if (!ciudad || !elementoId || typeof elementoId !== 'string') {
+    console.warn('Parámetros inválidos en obtenerClimaCiudad:', ciudad, elementoId);
+    return;
+  }
+
+  fetch('https://api.openweathermap.org/data/2.5/weather?q=' + encodeURIComponent(ciudad) + '&appid=' + API_KEY_CLIMA + '&units=metric&lang=es')
     .then(r => r.json())
     .then(data => {
+      // Validar que data.main y data.weather existan
+      if (!data || !data.main || !data.weather || data.weather.length === 0) {
+        console.warn('Datos de clima incompletos para:', ciudad);
+        return;
+      }
+
       const temp  = Math.round(data.main.temp);
       const id    = data.weather[0].id;
-      const desc  = data.weather[0].description;
+      const desc  = data.weather[0].description || 'Clima';
       const icono = obtenerIconoClima(id);
       const etiq  = obtenerEtiqueta(id);
 
@@ -116,9 +152,12 @@ function obtenerClimaCiudad(ciudad, elementoId) {
 
       if (iconoEl) iconoEl.textContent = icono;
       if (descEl)  descEl.textContent  = temp + '°C · ' + desc;
-      if (tagEl)   { tagEl.textContent = etiq.texto; tagEl.className = 'clima-tag ' + etiq.clase; }
+      if (tagEl)   { 
+        tagEl.textContent = etiq.texto; 
+        tagEl.className = 'clima-tag ' + etiq.clase; 
+      }
     })
-    .catch(() => console.log('Error clima:', ciudad));
+    .catch(err => console.error('Error clima para', ciudad + ':', err));
 }
 
 // Llamar clima de cada ciudad en la sección
@@ -144,23 +183,28 @@ const destinos = [
 ];
 
 function buscar() {
-  const inputEl = document.querySelector('.search-bar input');
-  const termino = inputEl ? inputEl.value.trim().toLowerCase() : '';
+  try {
+    const inputEl = document.querySelector('.search-bar input');
+    const termino = inputEl ? inputEl.value.trim().toLowerCase() : '';
 
-  if (!termino) {
-    alert('✈️ Escribe un destino para buscar, por ejemplo: Cartagena, Amazonas, Guajira...');
-    return;
-  }
+    if (!termino) {
+      alert('✈️ Escribe un destino para buscar, por ejemplo: Cartagena, Amazonas, Guajira...');
+      return;
+    }
 
-  const resultados = destinos.filter(d =>
-    d.nombre.toLowerCase().includes(termino) ||
-    d.region.toLowerCase().includes(termino)
-  );
+    const resultados = destinos.filter(d =>
+      d.nombre.toLowerCase().includes(termino) ||
+      d.region.toLowerCase().includes(termino)
+    );
 
-  if (resultados.length === 0) {
-    alert('No encontramos "' + termino + '".\nIntenta con: Cartagena, Guatapé, Amazonas, Guajira...');
-  } else {
-    const lista = resultados.map(d => '📍 ' + d.nombre + ' — ' + d.region).join('\n');
-    alert('Resultados para "' + termino + '":\n\n' + lista + '\n\n(Próximamente como tarjetas 🚀)');
+    if (resultados.length === 0) {
+      alert('No encontramos "' + termino + '".\nIntenta con: Cartagena, Guatapé, Amazonas, Guajira...');
+    } else {
+      const lista = resultados.map(d => '📍 ' + d.nombre + ' — ' + d.region).join('\n');
+      alert('Resultados para "' + termino + '":\n\n' + lista + '\n\n(Próximamente como tarjetas 🚀)');
+    }
+  } catch (e) {
+    console.error('Error en función buscar:', e);
+    alert('Ocurrió un error en la búsqueda. Por favor, intenta de nuevo.');
   }
 }

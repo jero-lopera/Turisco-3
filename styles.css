@@ -32,7 +32,9 @@ body {
    ============================================= */
 nav {
   position: fixed;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
   display: flex;
   align-items: center;
@@ -40,6 +42,7 @@ nav {
   padding: 1rem 2.5rem;
   background: rgba(250, 248, 243, 0.92);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--borde);
 }
 
@@ -69,8 +72,10 @@ nav {
   transition: color 0.2s;
 }
 
-.nav-links a:hover {
+.nav-links a:hover,
+.nav-links a:focus {
   color: var(--verde);
+  outline: none;
 }
 
 .nav-cta {
@@ -85,8 +90,10 @@ nav {
   transition: background 0.2s;
 }
 
-.nav-cta:hover {
+.nav-cta:hover,
+.nav-cta:focus {
   background: var(--verde-oscuro);
+  outline: none;
 }
 
 /* =============================================
@@ -173,9 +180,11 @@ nav {
   transition: all 0.2s;
 }
 
-.btn-primary:hover {
+.btn-primary:hover,
+.btn-primary:focus {
   background: var(--verde-oscuro);
   transform: translateY(-2px);
+  outline: none;
 }
 
 .btn-secondary {
@@ -190,9 +199,11 @@ nav {
   transition: all 0.2s;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover,
+.btn-secondary:focus {
   border-color: var(--verde);
   color: var(--verde);
+  outline: none;
 }
 
 /* =============================================
@@ -211,6 +222,7 @@ nav {
   margin: -1rem auto 0;
   position: relative;
   z-index: 2;
+  flex-wrap: wrap;
 }
 
 .stat {
@@ -276,6 +288,12 @@ nav {
   color: var(--texto);
 }
 
+.search-bar input:focus,
+.search-bar select:focus {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+
 .search-bar button {
   background: var(--verde);
   color: white;
@@ -288,8 +306,10 @@ nav {
   transition: background 0.2s;
 }
 
-.search-bar button:hover {
+.search-bar button:hover,
+.search-bar button:focus {
   background: var(--verde-oscuro);
+  outline: none;
 }
 
 /* =============================================
@@ -306,6 +326,8 @@ nav {
   align-items: flex-end;
   justify-content: space-between;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .ver-todos {
@@ -313,6 +335,13 @@ nav {
   font-size: 0.9rem;
   cursor: pointer;
   text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.ver-todos:hover,
+.ver-todos:focus {
+  color: var(--verde-oscuro);
+  outline: none;
 }
 
 .destinos-grid {
@@ -331,9 +360,11 @@ nav {
   transition: transform 0.25s, box-shadow 0.25s;
 }
 
-.card:hover {
+.card:hover,
+.card:focus {
   transform: translateY(-6px);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+  outline: none;
 }
 
 .card-img {
@@ -343,6 +374,8 @@ nav {
   padding: 1rem;
   position: relative;
   overflow: hidden;
+  background-size: cover;
+  background-position: center;
 }
 
 .card.featured .card-img {
@@ -380,6 +413,7 @@ nav {
   font-family: 'Playfair Display', serif;
   font-size: 1.3rem;
   font-weight: 700;
+  margin: 0;
 }
 
 .card-region {
@@ -395,6 +429,8 @@ nav {
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid var(--borde);
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .card-temp {
@@ -422,10 +458,21 @@ nav {
 }
 
 /* ---- Gradientes por destino ---- */
-.bg-cartagena { background: linear-gradient(160deg, #F5C4B3, #D85A30 80%); }
-.bg-medellin  { background: linear-gradient(160deg, #9FE1CB, #0F6E56 80%); }
-.bg-amazonia  { background: linear-gradient(160deg, #C0DD97, #3B6D11 80%); }
-.bg-guajira   { background: linear-gradient(160deg, #B5D4F4, #185FA5 80%); }
+.bg-cartagena {
+  background: linear-gradient(160deg, #F5C4B3, #D85A30 80%);
+}
+
+.bg-medellin {
+  background: linear-gradient(160deg, #9FE1CB, #0F6E56 80%);
+}
+
+.bg-amazonia {
+  background: linear-gradient(160deg, #C0DD97, #3B6D11 80%);
+}
+
+.bg-guajira {
+  background: linear-gradient(160deg, #B5D4F4, #185FA5 80%);
+}
 
 /* =============================================
    CLIMA INTELIGENTE
@@ -462,6 +509,13 @@ nav {
   border-radius: 16px;
   padding: 1.5rem;
   text-align: center;
+  transition: background 0.2s;
+}
+
+.clima-card:hover,
+.clima-card:focus {
+  background: rgba(255, 255, 255, 0.15);
+  outline: none;
 }
 
 .big-icon {
@@ -489,8 +543,13 @@ nav {
   font-size: 0.75rem;
 }
 
-.tag-ok   { background: rgba(29, 158, 117, 0.4); }
-.tag-rain { background: rgba(216, 90, 48, 0.4); }
+.tag-ok {
+  background: rgba(29, 158, 117, 0.4);
+}
+
+.tag-rain {
+  background: rgba(216, 90, 48, 0.4);
+}
 
 /* =============================================
    INFO: UBICACIÓN / HORARIO / DISTANCIA
@@ -571,9 +630,11 @@ nav {
   cursor: pointer;
 }
 
-.hostal-card:hover {
+.hostal-card:hover,
+.hostal-card:focus {
   transform: translateY(-3px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  outline: none;
 }
 
 .hostal-avatar {
@@ -590,12 +651,14 @@ nav {
 .hostal-info h4 {
   font-size: 1rem;
   font-weight: 500;
+  margin: 0;
 }
 
 .hostal-info p {
   font-size: 0.8rem;
   color: var(--texto-suave);
   margin-top: 0.2rem;
+  margin-bottom: 0;
 }
 
 .hostal-info .price {
@@ -657,5 +720,88 @@ html {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* =============================================
+   MEDIA QUERIES - RESPONSIVE
+   ============================================= */
+@media (max-width: 768px) {
+  nav {
+    padding: 1rem;
+  }
+
+  .nav-links {
+    gap: 1rem;
+    font-size: 0.8rem;
+  }
+
+  .hero {
+    padding: 6rem 1rem 3rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(2rem, 6vw, 4rem);
+  }
+
+  .stats {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .destinos-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .search-bar {
+    flex-direction: column;
+  }
+
+  .search-bar input,
+  .search-bar select,
+  .search-bar button {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .clima-grid,
+  .info-inner,
+  .hospedaje-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+  }
+
+  nav {
+    padding: 0.75rem;
+  }
+
+  .nav-links {
+    gap: 0.75rem;
+  }
+
+  .hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .destinos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-img {
+    height: 150px;
+  }
+
+  .card.featured .card-img {
+    height: 150px;
   }
 }

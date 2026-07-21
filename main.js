@@ -82,9 +82,28 @@ async function obtenerCoordenadas(ciudad) {
 // ✅ PASO 7 — Funciones de Base de Datos
 // =============================================
 
+// Esperar a que la BD esté lista
+async function esperarBaseDatos(timeout = 5000) {
+  const inicio = Date.now();
+  while (!turiscoDb || !turiscoDb.db) {
+    if (Date.now() - inicio > timeout) {
+      console.warn('Timeout esperando BD');
+      return false;
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+  return true;
+}
+
 // Agregar a favoritos
 async function agregarAFavoritos(nombreDestino, region, clima, distancia) {
   try {
+    const bDisponible = await esperarBaseDatos();
+    if (!bDisponible) {
+      alert('⚠️ La base de datos no está disponible');
+      return;
+    }
+
     const coordDestino = await obtenerCoordenadas(nombreDestino);
     const coordenadas = coordDestino ? { 
       latitud: coordDestino.latitud, 
@@ -102,6 +121,12 @@ async function agregarAFavoritos(nombreDestino, region, clima, distancia) {
 // Mostrar favoritos
 async function mostrarFavoritos() {
   try {
+    const bDisponible = await esperarBaseDatos();
+    if (!bDisponible) {
+      alert('⚠️ La base de datos no está disponible');
+      return;
+    }
+
     const favoritos = await turiscoDb.obtenerFavoritos();
     if (favoritos.length === 0) {
       alert('📌 Aún no tienes destinos favoritos. ¡Agrega algunos!');
@@ -117,6 +142,11 @@ async function mostrarFavoritos() {
 // Guardar búsqueda en la base de datos
 async function guardarBusquedaEnBD(destino, lat, lon, clima) {
   try {
+    const bDisponible = await esperarBaseDatos();
+    if (!bDisponible) {
+      console.warn('⚠️ BD no disponible para guardar búsqueda');
+      return;
+    }
     await turiscoDb.guardarBusqueda(destino, lat, lon, clima);
     console.log('📝 Búsqueda guardada en la base de datos');
   } catch (error) {
@@ -127,6 +157,12 @@ async function guardarBusquedaEnBD(destino, lat, lon, clima) {
 // Ver historial de búsquedas
 async function verHistorial() {
   try {
+    const bDisponible = await esperarBaseDatos();
+    if (!bDisponible) {
+      alert('⚠️ La base de datos no está disponible');
+      return;
+    }
+
     const historial = await turiscoDb.obtenerHistorial(10);
     if (historial.length === 0) {
       alert('📜 No hay historial de búsquedas aún.');
@@ -142,6 +178,12 @@ async function verHistorial() {
 // Ver estadísticas
 async function verEstadisticas() {
   try {
+    const bDisponible = await esperarBaseDatos();
+    if (!bDisponible) {
+      alert('⚠️ La base de datos no está disponible');
+      return;
+    }
+
     const stats = await turiscoDb.obtenerEstadisticas();
     const mensaje = `
 📊 ESTADÍSTICAS DE TURISCO
@@ -357,7 +399,7 @@ function buscar() {
       const lista = resultados.map(d => '📍 ' + d.nombre + ' — ' + d.region).join('\n');
       alert('Resultados para "' + termino + '":\n\n' + lista + '\n\n(Próximamente como tarjetas 🚀)');
       
-      // Guardar búsqueda en la base de datos
+      // Guardar búsqueda en la base de datos (sin esperar)
       resultados.forEach(destino => {
         guardarBusquedaEnBD(destino.nombre, 0, 0, destino.clima);
       });

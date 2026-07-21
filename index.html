@@ -9,15 +9,60 @@
 </head>
 <body>
 
+  <!-- ===== MODALES DE AUTENTICACIÓN ===== -->
+
+  <!-- MODAL LOGIN -->
+  <div id="modal-login" class="modal" onclick="closeModalOnBackdropClick(event)">
+    <div class="modal-content">
+      <span class="close-btn" onclick="cerrarModalLogin()">&times;</span>
+      <h2>Iniciar Sesión</h2>
+      <form onsubmit="handleLoginSubmit(event)">
+        <input type="email" id="login-email" placeholder="📧 Correo" required>
+        <input type="password" id="login-password" placeholder="🔒 Contraseña" required>
+        <button type="submit" class="btn-modal-submit">Ingresar</button>
+      </form>
+      <p class="modal-link">¿No tienes cuenta? <a onclick="abrirModalRegistro(); cerrarModalLogin();">Regístrate aquí</a></p>
+    </div>
+  </div>
+
+  <!-- MODAL REGISTRO -->
+  <div id="modal-registro" class="modal" onclick="closeModalOnBackdropClick(event)">
+    <div class="modal-content">
+      <span class="close-btn" onclick="cerrarModalRegistro()">&times;</span>
+      <h2>Crear Cuenta</h2>
+      <form onsubmit="handleRegistroSubmit(event)">
+        <input type="text" id="registro-nombre" placeholder="👤 Nombre completo" required>
+        <input type="email" id="registro-email" placeholder="📧 Correo" required>
+        <input type="password" id="registro-password" placeholder="🔒 Contraseña (mín. 6 caracteres)" required>
+        <input type="password" id="registro-password-confirm" placeholder="🔒 Confirmar contraseña" required>
+        <button type="submit" class="btn-modal-submit">Crear Cuenta</button>
+      </form>
+      <p class="modal-link">¿Ya tienes cuenta? <a onclick="abrirModalLogin(); cerrarModalRegistro();">Inicia sesión aquí</a></p>
+    </div>
+  </div>
+
   <!-- ===== NAV ===== -->
   <nav>
-    <div class="nav-logo"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[...]
+    <div class="nav-logo"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" alt="Turisco">
+    </div>
     <ul class="nav-links">
       <li><a href="#seccion-destinos">Destinos</a></li>
       <li><a href="#seccion-clima">Clima</a></li>
       <li><a href="#seccion-hospedaje">Hospedaje</a></li>
       <li><a href="#seccion-destinos">Global</a></li>
     </ul>
+    
+    <!-- SECCIÓN DE AUTENTICACIÓN EN NAV -->
+    <div id="auth-login-section" class="nav-auth" style="display: flex;">
+      <button class="nav-btn-login" onclick="abrirModalLogin()">🔐 Iniciar Sesión</button>
+      <button class="nav-btn-register" onclick="abrirModalRegistro()">✍️ Registrarse</button>
+    </div>
+
+    <div id="auth-user-section" class="nav-user" style="display: none;">
+      <span class="user-greeting">👤 Hola, <strong id="user-name">Usuario</strong></span>
+      <button class="nav-btn-logout" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+    </div>
+
     <button class="nav-cta" onclick="document.getElementById('seccion-destinos').scrollIntoView({behavior:'smooth'})">Explorar ahora</button>
   </nav>
 
@@ -26,7 +71,7 @@
     <div>
       <div class="hero-badge">
         <span class="dot"></span>
-        Turismo inteligente · Colombia &amp; el mundo
+        Turismo inteligente · Colombia & el mundo
       </div>
       <h1>Descubre<br><em>Colombia</em><br>como nunca</h1>
       <p>Destinos personalizados según el clima de hoy. Si llueve aquí, te decimos dónde brilla el sol mañana.</p>
@@ -104,7 +149,7 @@
             <span class="card-dist">~640 km</span>
           </div>
           <div class="rating">★★★★★ <span class="rating-count">4.9 (2.3k reseñas)</span></div>
-          <button class="btn-favorito" onclick="agregarAFavoritos('Cartagena de Indias', 'Bolívar · Caribe', 'soleado', 640)">❤️ Favorito</button>
+          <button class="btn-favorito" onclick="agregarAFavoritos('Cartagena de Indias', 'Bolívar · Caribe', 'soleado', 640)">❤️ Agregar a favoritos</button>
         </div>
       </div>
 
@@ -121,7 +166,7 @@
             <span class="card-dist">~80 km</span>
           </div>
           <div class="rating">★★★★★ <span class="rating-count">4.8 (1.7k reseñas)</span></div>
-          <button class="btn-favorito" onclick="agregarAFavoritos('Guatapé', 'Antioquia', 'nublado', 80)">❤️ Favorito</button>
+          <button class="btn-favorito" onclick="agregarAFavoritos('Guatapé', 'Antioquia', 'nublado', 80)">❤️ Agregar a favoritos</button>
         </div>
       </div>
 
@@ -138,7 +183,7 @@
             <span class="card-dist">~1200 km</span>
           </div>
           <div class="rating">★★★★☆ <span class="rating-count">4.7 (980 reseñas)</span></div>
-          <button class="btn-favorito" onclick="agregarAFavoritos('Leticia, Amazonas', 'Amazonas · Selva', 'soleado', 1200)">❤️ Favorito</button>
+          <button class="btn-favorito" onclick="agregarAFavoritos('Leticia, Amazonas', 'Amazonas · Selva', 'soleado', 1200)">❤️ Agregar a favoritos</button>
         </div>
       </div>
 
@@ -149,13 +194,13 @@
         </div>
         <div class="card-body">
           <div class="card-title">La Guajira</div>
-          <div class="card-region">Guajira · Desierto &amp; Mar</div>
+          <div class="card-region">Guajira · Desierto & Mar</div>
           <div class="card-meta">
             <span class="card-temp">🌡 35°C · Seco y ventoso</span>
             <span class="card-dist">~850 km</span>
           </div>
           <div class="rating">★★★★★ <span class="rating-count">4.9 (1.1k reseñas)</span></div>
-          <button class="btn-favorito" onclick="agregarAFavoritos('La Guajira', 'Guajira · Desierto', 'soleado', 850)">❤️ Favorito</button>
+          <button class="btn-favorito" onclick="agregarAFavoritos('La Guajira', 'Guajira · Desierto', 'soleado', 850)">❤️ Agregar a favoritos</button>
         </div>
       </div>
 
@@ -282,13 +327,14 @@
 
   <!-- ===== FOOTER ===== -->
   <footer>
-    <div class="footer-logo"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[...]
+    <div class="footer-logo"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" alt="Turisco Logo"></div>
     <p>Turismo inteligente para Colombia y el mundo</p>
-    <p class="footer-version">Versión 0.1 · En desarrollo</p>
+    <p class="footer-version">Versión 0.2 · Con autenticación</p>
   </footer>
 
-  <!-- Scripts -->
+  <!-- SCRIPTS - ORDEN IMPORTANTE -->
   <script src="db.js"></script>
+  <script src="auth.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

@@ -11,7 +11,7 @@
 
   <!-- ===== NAV ===== -->
   <nav>
-    <div class="nav-logo"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQ[...]
+    <div class="nav-logo"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[...]
     <ul class="nav-links">
       <li><a href="#seccion-destinos">Destinos</a></li>
       <li><a href="#seccion-clima">Clima</a></li>
@@ -104,6 +104,7 @@
             <span class="card-dist">~640 km</span>
           </div>
           <div class="rating">★★★★★ <span class="rating-count">4.9 (2.3k reseñas)</span></div>
+          <button class="btn-favorito" onclick="agregarAFavoritos('Cartagena de Indias', 'Bolívar · Caribe', 'soleado', 640)">❤️ Favorito</button>
         </div>
       </div>
 
@@ -120,6 +121,7 @@
             <span class="card-dist">~80 km</span>
           </div>
           <div class="rating">★★★★★ <span class="rating-count">4.8 (1.7k reseñas)</span></div>
+          <button class="btn-favorito" onclick="agregarAFavoritos('Guatapé', 'Antioquia', 'nublado', 80)">❤️ Favorito</button>
         </div>
       </div>
 
@@ -136,6 +138,7 @@
             <span class="card-dist">~1200 km</span>
           </div>
           <div class="rating">★★★★☆ <span class="rating-count">4.7 (980 reseñas)</span></div>
+          <button class="btn-favorito" onclick="agregarAFavoritos('Leticia, Amazonas', 'Amazonas · Selva', 'soleado', 1200)">❤️ Favorito</button>
         </div>
       </div>
 
@@ -152,6 +155,7 @@
             <span class="card-dist">~850 km</span>
           </div>
           <div class="rating">★★★★★ <span class="rating-count">4.9 (1.1k reseñas)</span></div>
+          <button class="btn-favorito" onclick="agregarAFavoritos('La Guajira', 'Guajira · Desierto', 'soleado', 850)">❤️ Favorito</button>
         </div>
       </div>
 
@@ -283,6 +287,8 @@
     <p class="footer-version">Versión 0.1 · En desarrollo</p>
   </footer>
 
+  <!-- Scripts -->
+  <script src="db.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

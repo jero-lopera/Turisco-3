@@ -5,10 +5,159 @@
 //  ✅ PASO 3 - Hora en tiempo real
 //  ✅ PASO 4 - Detectar ubicación del usuario
 //  ✅ PASO 5 - Clima real con OpenWeatherMap
-//  🔜 PASO 6 - Buscador conectado a destinos
+//  ✅ PASO 6 - Cálculo de distancia y tiempo (Open Route Service)
+//  ✅ PASO 7 - Base de datos de favoritos y búsquedas
 // =============================================
 
 const API_KEY_CLIMA = '8fe318cf34b450bc6643ce5daecb4da3';
+
+// =============================================
+// ✅ PASO 6 — Calcular distancia y tiempo entre ubicaciones
+// =============================================
+// Open Route Service API (gratuita)
+const OPEN_ROUTE_SERVICE_API = 'https://api.openrouteservice.org/v2/directions/driving';
+
+// Función para obtener tiempo y distancia entre dos puntos
+async function calcularDistanciaYTiempo(latOrigen, lonOrigen, latDestino, lonDestino) {
+  try {
+    // Open Route Service requiere formato: [longitud, latitud]
+    const url = `${OPEN_ROUTE_SERVICE_API}?api_key=5b3ce3597851110001cf624800e09e5dc&start=${lonOrigen},${latOrigen}&end=${lonDestino},${latDestino}`;
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (!data || !data.routes || data.routes.length === 0) {
+      console.warn('No se encontró ruta');
+      return null;
+    }
+    
+    const ruta = data.routes[0];
+    const distanciaMetros = ruta.distance; // en metros
+    const tiempoSegundos = ruta.duration;  // en segundos
+    
+    // Convertir a unidades legibles
+    const distanciaKm = (distanciaMetros / 1000).toFixed(1);
+    const tiempoHoras = Math.floor(tiempoSegundos / 3600);
+    const tiempoMinutos = Math.floor((tiempoSegundos % 3600) / 60);
+    
+    return {
+      distanciaKm: parseFloat(distanciaKm),
+      distanciaMetros: distanciaMetros,
+      tiempoSegundos: tiempoSegundos,
+      tiempoFormato: `${tiempoHoras}h ${tiempoMinutos}m`,
+      tiempoHoras: tiempoHoras,
+      tiempoMinutos: tiempoMinutos
+    };
+  } catch (error) {
+    console.error('Error calculando distancia:', error);
+    return null;
+  }
+}
+
+// Función para obtener coordenadas de una ciudad usando Nominatim
+async function obtenerCoordenadas(ciudad) {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(ciudad)}&format=json&limit=1`
+    );
+    const data = await response.json();
+    
+    if (!data || data.length === 0) {
+      console.warn(`No se encontraron coordenadas para: ${ciudad}`);
+      return null;
+    }
+    
+    return {
+      latitud: parseFloat(data[0].lat),
+      longitud: parseFloat(data[0].lon),
+      nombre: data[0].display_name
+    };
+  } catch (error) {
+    console.error(`Error obteniendo coordenadas para ${ciudad}:`, error);
+    return null;
+  }
+}
+
+// =============================================
+// ✅ PASO 7 — Funciones de Base de Datos
+// =============================================
+
+// Agregar a favoritos
+async function agregarAFavoritos(nombreDestino, region, clima, distancia) {
+  try {
+    const coordDestino = await obtenerCoordenadas(nombreDestino);
+    const coordenadas = coordDestino ? { 
+      latitud: coordDestino.latitud, 
+      longitud: coordDestino.longitud 
+    } : { latitud: 0, longitud: 0 };
+
+    await turiscoDb.agregarFavorito(nombreDestino, region, clima, distancia, coordenadas);
+    alert(`❤️ ${nombreDestino} agregado a favoritos!`);
+  } catch (error) {
+    console.error('Error agregando favorito:', error);
+    alert('⚠️ Este destino ya está en favoritos');
+  }
+}
+
+// Mostrar favoritos
+async function mostrarFavoritos() {
+  try {
+    const favoritos = await turiscoDb.obtenerFavoritos();
+    if (favoritos.length === 0) {
+      alert('📌 Aún no tienes destinos favoritos. ¡Agrega algunos!');
+      return;
+    }
+    const lista = favoritos.map(f => `❤️ ${f.nombreDestino} (${f.region}) - ${f.distancia}km`).join('\n');
+    alert(`Tus favoritos:\n\n${lista}`);
+  } catch (error) {
+    console.error('Error mostrando favoritos:', error);
+  }
+}
+
+// Guardar búsqueda en la base de datos
+async function guardarBusquedaEnBD(destino, lat, lon, clima) {
+  try {
+    await turiscoDb.guardarBusqueda(destino, lat, lon, clima);
+    console.log('📝 Búsqueda guardada en la base de datos');
+  } catch (error) {
+    console.error('Error guardando búsqueda:', error);
+  }
+}
+
+// Ver historial de búsquedas
+async function verHistorial() {
+  try {
+    const historial = await turiscoDb.obtenerHistorial(10);
+    if (historial.length === 0) {
+      alert('📜 No hay historial de búsquedas aún.');
+      return;
+    }
+    const lista = historial.map(h => `🔍 ${h.destino} (${h.fechaLegible})`).join('\n');
+    alert(`Últimas 10 búsquedas:\n\n${lista}`);
+  } catch (error) {
+    console.error('Error viendo historial:', error);
+  }
+}
+
+// Ver estadísticas
+async function verEstadisticas() {
+  try {
+    const stats = await turiscoDb.obtenerEstadisticas();
+    const mensaje = `
+📊 ESTADÍSTICAS DE TURISCO
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Total de búsquedas: ${stats.totalBusquedas}
+❤️ Total de favoritos: ${stats.totalFavoritos}
+⭐ Destino favorito: ${stats.destinoFavorito}
+🏆 Top 5 destinos:
+${stats.topDestinos.map((d, i) => `  ${i + 1}. ${d[0]} (${d[1]} búsquedas)`).join('\n')}
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+    `;
+    alert(mensaje);
+  } catch (error) {
+    console.error('Error obteniendo estadísticas:', error);
+  }
+}
 
 // =============================================
 // ✅ PASO 3 — Hora local en tiempo real
@@ -31,6 +180,8 @@ setInterval(actualizarHora, 1000);
 // =============================================
 // ✅ PASO 4 — Detectar ciudad del usuario
 // =============================================
+let coordenadasUsuario = null; // Guardar coordenadas para usarlas después
+
 function detectarUbicacion() {
   const el = document.getElementById('ciudad-actual');
   if (!navigator.geolocation) {
@@ -41,6 +192,9 @@ function detectarUbicacion() {
     function (pos) {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
+
+      // Guardar coordenadas del usuario
+      coordenadasUsuario = { latitud: lat, longitud: lon };
 
       // También aprovechamos para pedir el clima de la ubicación actual
       obtenerClimaUbicacion(lat, lon);
@@ -170,16 +324,16 @@ detectarUbicacion();
 
 
 // =============================================
-// 🔜 PASO 6 — Buscador de destinos
+// 🔜 PASO 8 — Buscador de destinos avanzado
 // =============================================
 const destinos = [
-  { nombre: 'Cartagena de Indias', region: 'Bolívar · Caribe',  clima: 'soleado', distancia: 640  },
-  { nombre: 'Guatapé',             region: 'Antioquia',          clima: 'nublado', distancia: 80   },
-  { nombre: 'Leticia, Amazonas',   region: 'Amazonas · Selva',   clima: 'soleado', distancia: 1200 },
-  { nombre: 'La Guajira',          region: 'Guajira · Desierto', clima: 'soleado', distancia: 850  },
-  { nombre: 'Santa Marta',         region: 'Magdalena · Caribe', clima: 'nublado', distancia: 700  },
-  { nombre: 'San Andrés',          region: 'Isla · Caribe',      clima: 'soleado', distancia: 1300 },
-  { nombre: 'Villa de Leyva',      region: 'Boyacá',             clima: 'soleado', distancia: 350  },
+  { nombre: 'Cartagena de Indias', region: 'Bolívar · Caribe',  clima: 'soleado', distancia: 640, ciudad: 'Cartagena' },
+  { nombre: 'Guatapé',             region: 'Antioquia',          clima: 'nublado', distancia: 80,   ciudad: 'Guatapé' },
+  { nombre: 'Leticia, Amazonas',   region: 'Amazonas · Selva',   clima: 'soleado', distancia: 1200, ciudad: 'Leticia' },
+  { nombre: 'La Guajira',          region: 'Guajira · Desierto', clima: 'soleado', distancia: 850,  ciudad: 'Riohacha' },
+  { nombre: 'Santa Marta',         region: 'Magdalena · Caribe', clima: 'nublado', distancia: 700,  ciudad: 'Santa Marta' },
+  { nombre: 'San Andrés',          region: 'Isla · Caribe',      clima: 'soleado', distancia: 1300, ciudad: 'San Andrés' },
+  { nombre: 'Villa de Leyva',      region: 'Boyacá',             clima: 'soleado', distancia: 350,  ciudad: 'Villa de Leyva' },
 ];
 
 function buscar() {
@@ -202,6 +356,29 @@ function buscar() {
     } else {
       const lista = resultados.map(d => '📍 ' + d.nombre + ' — ' + d.region).join('\n');
       alert('Resultados para "' + termino + '":\n\n' + lista + '\n\n(Próximamente como tarjetas 🚀)');
+      
+      // Guardar búsqueda en la base de datos
+      resultados.forEach(destino => {
+        guardarBusquedaEnBD(destino.nombre, 0, 0, destino.clima);
+      });
+
+      // Opcionalmente calcular distancia para cada resultado
+      if (coordenadasUsuario) {
+        resultados.forEach(async (destino) => {
+          const coordDestino = await obtenerCoordenadas(destino.ciudad);
+          if (coordDestino) {
+            const distancia = await calcularDistanciaYTiempo(
+              coordenadasUsuario.latitud,
+              coordenadasUsuario.longitud,
+              coordDestino.latitud,
+              coordDestino.longitud
+            );
+            if (distancia) {
+              console.log(`📍 ${destino.nombre}: ${distancia.distanciaKm} km · ${distancia.tiempoFormato}`);
+            }
+          }
+        });
+      }
     }
   } catch (e) {
     console.error('Error en función buscar:', e);

@@ -141,7 +141,7 @@ class TuriscoDatabase {
       };
 
       request.onerror = (event) => {
-        if (event.target.error.name === 'ConstraintError') {
+        if (event.target.error && event.target.error.name === 'ConstraintError') {
           console.log('⚠️ Este destino ya está en favoritos');
         }
         reject(event.target.error);
@@ -253,10 +253,11 @@ class TuriscoDatabase {
     const scoreTemp = Math.max(0, 100 - Math.abs(temp - 24) * 5);
     // Menos lluvia es mejor
     const scorePrecip = Math.max(0, 100 - precip * 0.5);
-    // Mayor popularidad es mejor
-    const scorePopularidad = popularidad * 20;
+    // Mayor popularidad es mejor (popularidad 1-5 -> 20-100)
+    const scorePopularidad = Math.max(0, Math.min(100, popularidad * 20));
 
-    return Math.round((scoreTemp * 0.4 + scorePrecip * 0.3 + scorePopularidad * 0.3) / 100);
+    // Devolver un score en rango 0-100
+    return Math.round(scoreTemp * 0.4 + scorePrecip * 0.3 + scorePopularidad * 0.3);
   }
 
   // Obtener análisis por mes

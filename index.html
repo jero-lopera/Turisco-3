@@ -14,36 +14,42 @@
   <!-- MODAL LOGIN -->
   <div id="modal-login" class="modal" onclick="closeModalOnBackdropClick(event)">
     <div class="modal-content">
-      <span class="close-btn" onclick="cerrarModalLogin()">&times;</span>
+      <button class="close-btn" aria-label="Cerrar" onclick="cerrarModalLogin()">&times;</button>
       <h2>Iniciar Sesión</h2>
       <form onsubmit="handleLoginSubmit(event)">
-        <input type="email" id="login-email" placeholder="📧 Correo" required>
-        <input type="password" id="login-password" placeholder="🔒 Contraseña" required>
+        <label for="login-email" class="sr-only">Correo</label>
+        <input type="email" id="login-email" placeholder="📧 Correo" required aria-label="Correo">
+        <label for="login-password" class="sr-only">Contraseña</label>
+        <input type="password" id="login-password" placeholder="🔒 Contraseña" required aria-label="Contraseña">
         <button type="submit" class="btn-modal-submit">Ingresar</button>
       </form>
-      <p class="modal-link">¿No tienes cuenta? <a onclick="abrirModalRegistro(); cerrarModalLogin();">Regístrate aquí</a></p>
+      <p class="modal-link">¿No tienes cuenta? <button class="link-button" onclick="abrirModalRegistro(); cerrarModalLogin();">Regístrate aquí</button></p>
     </div>
   </div>
 
   <!-- MODAL REGISTRO -->
   <div id="modal-registro" class="modal" onclick="closeModalOnBackdropClick(event)">
     <div class="modal-content">
-      <span class="close-btn" onclick="cerrarModalRegistro()">&times;</span>
+      <button class="close-btn" aria-label="Cerrar" onclick="cerrarModalRegistro()">&times;</button>
       <h2>Crear Cuenta</h2>
       <form onsubmit="handleRegistroSubmit(event)">
-        <input type="text" id="registro-nombre" placeholder="👤 Nombre completo" required>
-        <input type="email" id="registro-email" placeholder="📧 Correo" required>
-        <input type="password" id="registro-password" placeholder="🔒 Contraseña (mín. 6 caracteres)" required>
-        <input type="password" id="registro-password-confirm" placeholder="🔒 Confirmar contraseña" required>
+        <label for="registro-nombre" class="sr-only">Nombre completo</label>
+        <input type="text" id="registro-nombre" placeholder="👤 Nombre completo" required aria-label="Nombre completo">
+        <label for="registro-email" class="sr-only">Correo</label>
+        <input type="email" id="registro-email" placeholder="📧 Correo" required aria-label="Correo">
+        <label for="registro-password" class="sr-only">Contraseña</label>
+        <input type="password" id="registro-password" placeholder="🔒 Contraseña (mín. 6 caracteres)" required aria-label="Contraseña">
+        <label for="registro-password-confirm" class="sr-only">Confirmar contraseña</label>
+        <input type="password" id="registro-password-confirm" placeholder="🔒 Confirmar contraseña" required aria-label="Confirmar contraseña">
         <button type="submit" class="btn-modal-submit">Crear Cuenta</button>
       </form>
-      <p class="modal-link">¿Ya tienes cuenta? <a onclick="abrirModalLogin(); cerrarModalRegistro();">Inicia sesión aquí</a></p>
+      <p class="modal-link">¿Ya tienes cuenta? <button class="link-button" onclick="abrirModalLogin(); cerrarModalRegistro();">Inicia sesión aquí</button></p>
     </div>
   </div>
 
   <!-- ===== NAV ===== -->
   <nav>
-    <div class="nav-logo"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" alt="Turisco">
+    <div class="nav-logo"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[...]" alt="Turisco logo">
     </div>
     <ul class="nav-links">
       <li><a href="#seccion-destinos">Destinos</a></li>
@@ -107,14 +113,14 @@
     <div class="section-title">¿A dónde quieres ir?</div>
     <div class="section-sub">Busca por lugar, clima o distancia desde tu ubicación</div>
     <div class="search-bar">
-      <input type="text" placeholder="🔍  Ciudad, región o tipo de paisaje..." />
-      <select>
+      <input type="text" placeholder="🔍  Ciudad, región o tipo de paisaje..." aria-label="Buscar destino" />
+      <select aria-label="Clima">
         <option>Cualquier clima</option>
         <option>☀️ Soleado</option>
         <option>🌤 Parcialmente nublado</option>
         <option>🌧 Lluvioso</option>
       </select>
-      <select>
+      <select aria-label="Distancia">
         <option>Cualquier distancia</option>
         <option>Menos de 100 km</option>
         <option>100 – 300 km</option>
@@ -327,10 +333,37 @@
 
   <!-- ===== FOOTER ===== -->
   <footer>
-    <div class="footer-logo"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" alt="Turisco Logo"></div>
+    <div class="footer-logo"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[...]" alt="Turisco logo"></div>
     <p>Turismo inteligente para Colombia y el mundo</p>
     <p class="footer-version">Versión 0.2 · Con autenticación</p>
+    <p class="footer-links"><a href="/terms.html">Términos y Condiciones</a> · <a href="/privacy.html">Política de Privacidad</a></p>
   </footer>
+
+  <!-- COOKIE CONSENT BANNER -->
+  <div id="cookie-banner" class="cookie-banner" style="display:none;">
+    <p>Usamos cookies y servicios de terceros (clima, mapas, autenticación). Al continuar aceptas el uso de cookies y la transmisión de datos a estos proveedores. <a href="/privacy.html">Más información</a></p>
+    <div class="cookie-actions"><button id="accept-cookies">Aceptar</button> <button id="reject-cookies">Rechazar</button></div>
+  </div>
+
+  <!-- CONFIG INJECTION SNIPPET (REEMPLAZAR EN BUILD/CI) -->
+  <script>
+    // Si tu hosting te permite inyectar variables en build-time, reemplaza estos valores.
+    window.__TURISCO_CONFIG__ = window.__TURISCO_CONFIG__ || {
+      API_KEY_CLIMA: 'REPLACE_WITH_YOUR_OPENWEATHER_KEY',
+      ORS_KEY: 'REPLACE_WITH_YOUR_OPENROUTESERVICE_KEY',
+      CONTACT_EMAIL: '@turisco2026' // contacto público/handle
+    };
+
+    // Mostrar banner de cookies si no aceptado
+    (function(){
+      try{
+        const accepted = localStorage.getItem('turisco_cookies_accepted');
+        if (!accepted) document.getElementById('cookie-banner').style.display = 'flex';
+        document.getElementById('accept-cookies').addEventListener('click', ()=>{ localStorage.setItem('turisco_cookies_accepted','1'); document.getElementById('cookie-banner').style.display='none'; });
+        document.getElementById('reject-cookies').addEventListener('click', ()=>{ localStorage.setItem('turisco_cookies_accepted','0'); document.getElementById('cookie-banner').style.display='none'; });
+      }catch(e){console.warn('Cookie banner error',e)}
+    })();
+  </script>
 
   <!-- SCRIPTS - ORDEN IMPORTANTE -->
   <script src="db.js"></script>

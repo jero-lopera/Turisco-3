@@ -1,0 +1,6 @@
+# Ignorar configuraciones locales que contienen secretos
+config.local.js
+.env
+
+# Node modules (si usan node)
+node_modules/

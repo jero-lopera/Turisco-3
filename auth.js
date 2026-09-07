@@ -7,16 +7,34 @@
 // ⚠️ IMPORTANTE: Debes crear tu proyecto en Firebase
 // 1. Ve a: https://firebase.google.com/
 // 2. Crea un proyecto nuevo
-// 3. Copia la configuración aquí
+// 3. Copia la configuración en un archivo externo (ver CONFIG.md y config.example.js)
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDemoKey123456789", // ← Reemplaza con tu key
-  authDomain: "turisco-app.firebaseapp.com",
-  projectId: "turisco-app",
-  storageBucket: "turisco-app.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+// CARGA DE CONFIGURACIÓN
+// Este archivo ya no contiene las claves directamente. Crea un archivo `config.local.js`
+// (o incluye `config.example.js` renombrado a `config.local.js`) antes de cargar `auth.js`.
+// El archivo debe exponer `window.TURISCO_CONFIG = { firebaseConfig: { ... } }`.
+
+const DEFAULT_PLACEHOLDERS = {
+  apiKey: "REPLACE_WITH_YOUR_API_KEY",
+  authDomain: "REPLACE_WITH_YOUR_AUTH_DOMAIN",
+  projectId: "REPLACE_WITH_YOUR_PROJECT_ID",
+  storageBucket: "REPLACE_WITH_YOUR_STORAGE_BUCKET",
+  messagingSenderId: "REPLACE_WITH_YOUR_MESSAGING_SENDER_ID",
+  appId: "REPLACE_WITH_YOUR_APP_ID"
 };
+
+// Intenta leer la configuración desde window.TURISCO_CONFIG (establecido por config.local.js)
+const firebaseConfig = (typeof window !== 'undefined' && window.TURISCO_CONFIG && window.TURISCO_CONFIG.firebaseConfig)
+  ? window.TURISCO_CONFIG.firebaseConfig
+  : DEFAULT_PLACEHOLDERS;
+
+// Aviso si la configuración no fue reemplazada
+(function warnIfPlaceholders(cfg) {
+  const hasPlaceholder = Object.values(cfg).some(v => typeof v === 'string' && v.startsWith('REPLACE_'));
+  if (hasPlaceholder) {
+    console.warn('⚠️ Firebase config no está configurado. Crea `config.local.js` (o renombra `config.example.js`) y añade tus claves. Revisa CONFIG.md para instrucciones.');
+  }
+})(firebaseConfig);
 
 // Inicializar Firebase
 let auth = null;
@@ -189,8 +207,10 @@ function cerrarModalLogin() {
   const modal = document.getElementById('modal-login');
   if (modal) modal.style.display = 'none';
   // Limpiar campos
-  document.getElementById('login-email').value = '';
-  document.getElementById('login-password').value = '';
+  const loginEmail = document.getElementById('login-email');
+  const loginPassword = document.getElementById('login-password');
+  if (loginEmail) loginEmail.value = '';
+  if (loginPassword) loginPassword.value = '';
 }
 
 function abrirModalRegistro() {
@@ -202,10 +222,14 @@ function cerrarModalRegistro() {
   const modal = document.getElementById('modal-registro');
   if (modal) modal.style.display = 'none';
   // Limpiar campos
-  document.getElementById('registro-nombre').value = '';
-  document.getElementById('registro-email').value = '';
-  document.getElementById('registro-password').value = '';
-  document.getElementById('registro-password-confirm').value = '';
+  const nombreEl = document.getElementById('registro-nombre');
+  const emailEl = document.getElementById('registro-email');
+  const pwEl = document.getElementById('registro-password');
+  const pwConfirmEl = document.getElementById('registro-password-confirm');
+  if (nombreEl) nombreEl.value = '';
+  if (emailEl) emailEl.value = '';
+  if (pwEl) pwEl.value = '';
+  if (pwConfirmEl) pwConfirmEl.value = '';
 }
 
 // =============================================

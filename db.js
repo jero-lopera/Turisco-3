@@ -1,8 +1,6 @@
 // =============================================
 //  TURISCO - db.js
 //  Base de datos local con IndexedDB
-//  Almacena: historial de búsquedas, destinos favoritos, 
-//  preferencias de usuario y análisis de patrones de viaje
 // =============================================
 
 class TuriscoDatabase {
@@ -10,323 +8,173 @@ class TuriscoDatabase {
     this.dbName = 'TuriscoTravelDB';
     this.version = 1;
     this.db = null;
-    this.init();
+    this.ready = this.init();
   }
 
-  // Inicializar base de datos
   async init() {
+    if (!('indexedDB' in window)) {
+      console.warn('IndexedDB no está disponible en este navegador.');
+      return null;
+    }
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.version);
-
-      request.onerror = () => {
-        console.error('Error abriendo BD:', request.error);
-        reject(request.error);
-      };
-
+      request.onerror = () => { console.error('Error abriendo BD:', request.error); reject(request.error); };
+      request.onblocked = () => console.warn('La actualización de la BD está bloqueada por otra pestaña.');
       request.onsuccess = () => {
         this.db = request.result;
+        this.db.onversionchange = () => this.db.close();
         console.log('✅ Base de datos Turisco inicializada');
         resolve(this.db);
       };
-
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
-
-        // Store 1: Historial de búsquedas
         if (!db.objectStoreNames.contains('busquedas')) {
-          const store1 = db.createObjectStore('busquedas', { keyPath: 'id', autoIncrement: true });
-          store1.createIndex('timestamp', 'timestamp', { unique: false });
-          store1.createIndex('destino', 'destino', { unique: false });
+          const store = db.createObjectStore('busquedas', { keyPath: 'id', autoIncrement: true });
+          store.createIndex('timestamp', 'timestamp', { unique: false });
+          store.createIndex('destino', 'destino', { unique: false });
         }
-
-        // Store 2: Destinos favoritos
         if (!db.objectStoreNames.contains('favoritos')) {
-          const store2 = db.createObjectStore('favoritos', { keyPath: 'id', autoIncrement: true });
-          store2.createIndex('nombreDestino', 'nombreDestino', { unique: true });
-          store2.createIndex('fechaGuardado', 'fechaGuardado', { unique: false });
+          const store = db.createObjectStore('favoritos', { keyPath: 'id', autoIncrement: true });
+          store.createIndex('nombreDestino', 'nombreDestino', { unique: true });
+          store.createIndex('fechaGuardado', 'fechaGuardado', { unique: false });
         }
-
-        // Store 3: Preferencias del usuario
-        if (!db.objectStoreNames.contains('preferencias')) {
-          const store3 = db.createObjectStore('preferencias', { keyPath: 'clave' });
-        }
-
-        // Store 4: Análisis de patrones de viaje
+        if (!db.objectStoreNames.contains('preferencias')) db.createObjectStore('preferencias', { keyPath: 'clave' });
         if (!db.objectStoreNames.contains('analisis')) {
-          const store4 = db.createObjectStore('analisis', { keyPath: 'id', autoIncrement: true });
-          store4.createIndex('mes', 'mes', { unique: false });
-          store4.createIndex('tipoDestino', 'tipoDestino', { unique: false });
+          const store = db.createObjectStore('analisis', { keyPath: 'id', autoIncrement: true });
+          store.createIndex('mes', 'mes', { unique: false });
+          store.createIndex('tipoDestino', 'tipoDestino', { unique: false });
         }
-
-        console.log('✅ Stores creados exitosamente');
       };
     });
   }
 
-  // =============================================
-  // HISTORIAL DE BÚSQUEDAS
-  // =============================================
+  async esperarDisponible() {
+    await this.ready.catch(() => null);
+    if (!this.db) throw new Error('La base de datos no está disponible');
+    return this.db;
+  }
+
   async guardarBusqueda(destino, latitud, longitud, clima) {
-    const busqueda = {
-      destino,
-      latitud,
-      longitud,
-      clima,
-      timestamp: new Date().toISOString(),
-      fechaLegible: new Date().toLocaleString('es-CO')
-    };
-
+    const db = await this.esperarDisponible();
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['busquedas'], 'readwrite');
-      const store = transaction.objectStore('busquedas');
-      const request = store.add(busqueda);
-
-      request.onsuccess = () => {
-        console.log('📝 Búsqueda guardada:', destino);
-        resolve(request.result);
-      };
-
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  // Obtener historial de búsquedas
-  async obtenerHistorial(limite = 20) {
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['busquedas'], 'readonly');
-      const store = transaction.objectStore('busquedas');
-      const index = store.index('timestamp');
-      const request = index.openCursor(null, 'prev');
-
-      let historial = [];
-      let count = 0;
-
-      request.onsuccess = (event) => {
-        const cursor = event.target.result;
-        if (cursor && count < limite) {
-          historial.push(cursor.value);
-          count++;
-          cursor.continue();
-        } else {
-          resolve(historial);
-        }
-      };
-
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  // =============================================
-  // DESTINOS FAVORITOS
-  // =============================================
-  async agregarFavorito(nombreDestino, region, clima, distancia, coordenadas) {
-    const favorito = {
-      nombreDestino,
-      region,
-      clima,
-      distancia,
-      coordenadas, // { latitud, longitud }
-      fechaGuardado: new Date().toISOString(),
-      contador: 1 // Cuántas veces ha visitado este favorito
-    };
-
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['favoritos'], 'readwrite');
-      const store = transaction.objectStore('favoritos');
-      const request = store.add(favorito);
-
-      request.onsuccess = () => {
-        console.log('❤️ Favorito agregado:', nombreDestino);
-        resolve(request.result);
-      };
-
-      request.onerror = (event) => {
-        if (event.target.error && event.target.error.name === 'ConstraintError') {
-          console.log('⚠️ Este destino ya está en favoritos');
-        }
-        reject(event.target.error);
-      };
-    });
-  }
-
-  // Obtener todos los favoritos
-  async obtenerFavoritos() {
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['favoritos'], 'readonly');
-      const store = transaction.objectStore('favoritos');
-      const request = store.getAll();
-
+      const request = db.transaction('busquedas', 'readwrite').objectStore('busquedas').add({
+        destino, latitud, longitud, clima,
+        timestamp: new Date().toISOString(),
+        fechaLegible: new Date().toLocaleString('es-CO')
+      });
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
   }
 
-  // Eliminar un favorito
+  async obtenerHistorial(limite = 20) {
+    const db = await this.esperarDisponible();
+    return new Promise((resolve, reject) => {
+      const request = db.transaction('busquedas', 'readonly').objectStore('busquedas').index('timestamp').openCursor(null, 'prev');
+      const historial = [];
+      request.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor && historial.length < Math.max(0, limite)) { historial.push(cursor.value); cursor.continue(); }
+        else resolve(historial);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async agregarFavorito(nombreDestino, region, clima, distancia, coordenadas) {
+    const db = await this.esperarDisponible();
+    return new Promise((resolve, reject) => {
+      const request = db.transaction('favoritos', 'readwrite').objectStore('favoritos').add({ nombreDestino, region, clima, distancia, coordenadas, fechaGuardado: new Date().toISOString(), contador: 1 });
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async obtenerFavoritos() {
+    const db = await this.esperarDisponible();
+    return new Promise((resolve, reject) => {
+      const request = db.transaction('favoritos', 'readonly').objectStore('favoritos').getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   async eliminarFavorito(nombreDestino) {
+    const db = await this.esperarDisponible();
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['favoritos'], 'readwrite');
-      const store = transaction.objectStore('favoritos');
-      const index = store.index('nombreDestino');
-      const request = index.getKey(nombreDestino);
-
-      request.onsuccess = () => {
-        const key = request.result;
-        if (key !== undefined) {
-          const deleteRequest = store.delete(key);
-          deleteRequest.onsuccess = () => {
-            console.log('🗑️ Favorito eliminado:', nombreDestino);
-            resolve(true);
-          };
-          deleteRequest.onerror = () => reject(deleteRequest.error);
-        } else {
-          resolve(false);
-        }
-      };
-
+      const tx = db.transaction('favoritos', 'readwrite');
+      const store = tx.objectStore('favoritos');
+      const request = store.index('nombreDestino').getKey(nombreDestino);
+      request.onsuccess = () => request.result === undefined ? resolve(false) : store.delete(request.result);
       request.onerror = () => reject(request.error);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
     });
   }
 
-  // =============================================
-  // PREFERENCIAS DEL USUARIO
-  // =============================================
   async guardarPreferencia(clave, valor) {
-    const preferencia = { clave, valor, ultimaActualizacion: new Date().toISOString() };
-
+    const db = await this.esperarDisponible();
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['preferencias'], 'readwrite');
-      const store = transaction.objectStore('preferencias');
-      const request = store.put(preferencia);
-
-      request.onsuccess = () => {
-        console.log('⚙️ Preferencia guardada:', clave);
-        resolve(request.result);
-      };
-
+      const request = db.transaction('preferencias', 'readwrite').objectStore('preferencias').put({ clave, valor, ultimaActualizacion: new Date().toISOString() });
+      request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
   }
 
-  // Obtener una preferencia
   async obtenerPreferencia(clave) {
+    const db = await this.esperarDisponible();
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['preferencias'], 'readonly');
-      const store = transaction.objectStore('preferencias');
-      const request = store.get(clave);
-
-      request.onsuccess = () => resolve(request.result?.valor || null);
+      const request = db.transaction('preferencias', 'readonly').objectStore('preferencias').get(clave);
+      request.onsuccess = () => resolve(request.result?.valor ?? null);
       request.onerror = () => reject(request.error);
     });
   }
 
-  // =============================================
-  // ANÁLISIS DE PATRONES DE VIAJE (IA)
-  // =============================================
-  async guardarAnalisis(mes, tipoDestino, temperaturaPromedio, precipitacion, popularidad) {
-    const analisis = {
-      mes, // "enero", "febrero", etc.
-      tipoDestino, // "playa", "montaña", "ciudad", "selva"
-      temperaturaPromedio,
-      precipitacion, // en mm
-      popularidad, // 1-5
-      timestamp: new Date().toISOString(),
-      score: this.calcularScoreViaje(temperaturaPromedio, precipitacion, popularidad)
-    };
-
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['analisis'], 'readwrite');
-      const store = transaction.objectStore('analisis');
-      const request = store.add(analisis);
-
-      request.onsuccess = () => {
-        console.log('📊 Análisis guardado para:', tipoDestino);
-        resolve(request.result);
-      };
-
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  // Calcular score de viaje (algoritmo de recomendación)
   calcularScoreViaje(temp, precip, popularidad) {
-    // Rango ideal de temperatura: 20-28°C
-    const scoreTemp = Math.max(0, 100 - Math.abs(temp - 24) * 5);
-    // Menos lluvia es mejor
-    const scorePrecip = Math.max(0, 100 - precip * 0.5);
-    // Mayor popularidad es mejor (popularidad 1-5 -> 20-100)
-    const scorePopularidad = Math.max(0, Math.min(100, popularidad * 20));
-
-    // Devolver un score en rango 0-100
+    const temperatura = Number(temp), lluvia = Number(precip), popular = Number(popularidad);
+    if (![temperatura, lluvia, popular].every(Number.isFinite)) return 0;
+    const scoreTemp = Math.max(0, 100 - Math.abs(temperatura - 24) * 5);
+    const scorePrecip = Math.max(0, 100 - lluvia * 0.5);
+    const scorePopularidad = Math.max(0, Math.min(100, popular * 20));
     return Math.round(scoreTemp * 0.4 + scorePrecip * 0.3 + scorePopularidad * 0.3);
   }
 
-  // Obtener análisis por mes
-  async obtenerAnalisisPorMes(mes) {
+  async guardarAnalisis(mes, tipoDestino, temperaturaPromedio, precipitacion, popularidad) {
+    const db = await this.esperarDisponible();
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['analisis'], 'readonly');
-      const store = transaction.objectStore('analisis');
-      const index = store.index('mes');
-      const request = index.getAll(mes);
-
+      const request = db.transaction('analisis', 'readwrite').objectStore('analisis').add({ mes, tipoDestino, temperaturaPromedio, precipitacion, popularidad, timestamp: new Date().toISOString(), score: this.calcularScoreViaje(temperaturaPromedio, precipitacion, popularidad) });
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
   }
 
-  // =============================================
-  // ESTADÍSTICAS Y REPORTES
-  // =============================================
-  async obtenerEstadisticas() {
-    const historial = await this.obtenerHistorial();
-    const favoritos = await this.obtenerFavoritos();
-
-    const destinosMasBuscados = {};
-    historial.forEach(b => {
-      destinosMasBuscados[b.destino] = (destinosMasBuscados[b.destino] || 0) + 1;
-    });
-
-    const topDestinos = Object.entries(destinosMasBuscados)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-
-    return {
-      totalBusquedas: historial.length,
-      totalFavoritos: favoritos.length,
-      topDestinos: topDestinos,
-      destinoFavorito: topDestinos.length > 0 ? topDestinos[0][0] : 'N/A',
-      ultimaBusqueda: historial.length > 0 ? historial[0] : null
-    };
-  }
-
-  // Limpiar base de datos (solo para desarrollo)
-  async limpiarTodo() {
+  async obtenerAnalisisPorMes(mes) {
+    const db = await this.esperarDisponible();
     return new Promise((resolve, reject) => {
-      const stores = ['busquedas', 'favoritos', 'preferencias', 'analisis'];
-      let completadas = 0;
+      const request = db.transaction('analisis', 'readonly').objectStore('analisis').index('mes').getAll(mes);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
 
-      stores.forEach(storeName => {
-        const transaction = this.db.transaction([storeName], 'readwrite');
-        const store = transaction.objectStore(storeName);
-        const request = store.clear();
+  async obtenerEstadisticas() {
+    const [historial, favoritos] = await Promise.all([this.obtenerHistorial(), this.obtenerFavoritos()]);
+    const conteo = historial.reduce((resultado, item) => { resultado[item.destino] = (resultado[item.destino] || 0) + 1; return resultado; }, {});
+    const topDestinos = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    return { totalBusquedas: historial.length, totalFavoritos: favoritos.length, topDestinos, destinoFavorito: topDestinos[0]?.[0] || 'N/A', ultimaBusqueda: historial[0] || null };
+  }
 
-        request.onsuccess = () => {
-          completadas++;
-          if (completadas === stores.length) {
-            console.log('🧹 Base de datos limpiada');
-            resolve(true);
-          }
-        };
-
-        request.onerror = () => reject(request.error);
-      });
+  async limpiarTodo() {
+    const db = await this.esperarDisponible();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(['busquedas', 'favoritos', 'preferencias', 'analisis'], 'readwrite');
+      ['busquedas', 'favoritos', 'preferencias', 'analisis'].forEach(nombre => tx.objectStore(nombre).clear());
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
     });
   }
 }
 
-// Crear instancia global de la base de datos
 const turiscoDb = new TuriscoDatabase();
-
-// Exportar para uso en otros scripts
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = turiscoDb;
-}
+if (typeof window !== 'undefined') window.turiscoDb = turiscoDb;
+if (typeof module !== 'undefined' && module.exports) module.exports = turiscoDb;

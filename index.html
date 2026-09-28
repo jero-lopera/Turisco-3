@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Turisco - Descubre destinos en Colombia con clima en tiempo real y ubicación inteligente">
+  <meta name="theme-color" content="#1D9E75">
   <title>Turisco - Turismo Inteligente</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
@@ -14,37 +16,37 @@
   <!-- MODAL LOGIN -->
   <div id="modal-login" class="modal" onclick="closeModalOnBackdropClick(event)">
     <div class="modal-content">
-      <span class="close-btn" onclick="cerrarModalLogin()">&times;</span>
+      <button class="close-btn" onclick="cerrarModalLogin()" aria-label="Cerrar modal">&times;</button>
       <h2>Iniciar Sesión</h2>
       <form onsubmit="handleLoginSubmit(event)">
-        <input type="email" id="login-email" placeholder="📧 Correo" required>
-        <input type="password" id="login-password" placeholder="🔒 Contraseña" required>
+        <input type="email" id="login-email" placeholder="📧 Correo" required aria-label="Correo electrónico">
+        <input type="password" id="login-password" placeholder="🔒 Contraseña" required aria-label="Contraseña">
         <button type="submit" class="btn-modal-submit">Ingresar</button>
       </form>
-      <p class="modal-link">¿No tienes cuenta? <a onclick="abrirModalRegistro(); cerrarModalLogin();">Regístrate aquí</a></p>
+      <p class="modal-link">¿No tienes cuenta? <a onclick="abrirModalRegistro(); cerrarModalLogin();" role="button" tabindex="0">Regístrate aquí</a></p>
     </div>
   </div>
 
   <!-- MODAL REGISTRO -->
   <div id="modal-registro" class="modal" onclick="closeModalOnBackdropClick(event)">
     <div class="modal-content">
-      <span class="close-btn" onclick="cerrarModalRegistro()">&times;</span>
+      <button class="close-btn" onclick="cerrarModalRegistro()" aria-label="Cerrar modal">&times;</button>
       <h2>Crear Cuenta</h2>
       <form onsubmit="handleRegistroSubmit(event)">
-        <input type="text" id="registro-nombre" placeholder="👤 Nombre completo" required>
-        <input type="email" id="registro-email" placeholder="📧 Correo" required>
-        <input type="password" id="registro-password" placeholder="🔒 Contraseña (mín. 6 caracteres)" required>
-        <input type="password" id="registro-password-confirm" placeholder="🔒 Confirmar contraseña" required>
+        <input type="text" id="registro-nombre" placeholder="👤 Nombre completo" required aria-label="Nombre completo">
+        <input type="email" id="registro-email" placeholder="📧 Correo" required aria-label="Correo electrónico">
+        <input type="password" id="registro-password" placeholder="🔒 Contraseña (mín. 6 caracteres)" required aria-label="Contraseña">
+        <input type="password" id="registro-password-confirm" placeholder="🔒 Confirmar contraseña" required aria-label="Confirmar contraseña">
         <button type="submit" class="btn-modal-submit">Crear Cuenta</button>
       </form>
-      <p class="modal-link">¿Ya tienes cuenta? <a onclick="abrirModalLogin(); cerrarModalRegistro();">Inicia sesión aquí</a></p>
+      <p class="modal-link">¿Ya tienes cuenta? <a onclick="abrirModalLogin(); cerrarModalRegistro();" role="button" tabindex="0">Inicia sesión aquí</a></p>
     </div>
   </div>
 
   <!-- ===== NAV ===== -->
-  <nav>
+  <nav role="navigation" aria-label="Navegación principal">
     <div class="nav-logo">
-      <img src="assets/logo.png" alt="Turisco Logo" class="nav-logo-img">
+      <img src="assets/logo.png" alt="Turisco Logo" class="nav-logo-img" width="50" height="50">
     </div>
     <ul class="nav-links">
       <li><a href="#seccion-destinos">Destinos</a></li>
@@ -55,91 +57,91 @@
     
     <!-- SECCIÓN DE AUTENTICACIÓN EN NAV -->
     <div id="auth-login-section" class="nav-auth" style="display: flex;">
-      <button class="nav-btn-login" onclick="abrirModalLogin()">🔐 Iniciar Sesión</button>
-      <button class="nav-btn-register" onclick="abrirModalRegistro()">✍️ Registrarse</button>
+      <button class="nav-btn-login" onclick="abrirModalLogin()" aria-label="Abrir modal de iniciar sesión">🔐 Iniciar Sesión</button>
+      <button class="nav-btn-register" onclick="abrirModalRegistro()" aria-label="Abrir modal de registrarse">✍️ Registrarse</button>
     </div>
 
     <div id="auth-user-section" class="nav-user" style="display: none;">
       <span class="user-greeting">👤 Hola, <strong id="user-name">Usuario</strong></span>
-      <button class="nav-btn-logout" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+      <button class="nav-btn-logout" onclick="cerrarSesion()" aria-label="Cerrar sesión">🚪 Cerrar Sesión</button>
     </div>
 
-    <button class="nav-cta" onclick="document.getElementById('seccion-destinos').scrollIntoView({behavior:'smooth'})">Explorar ahora</button>
+    <button class="nav-cta" onclick="document.getElementById('seccion-destinos')?.scrollIntoView({behavior:'smooth'})" aria-label="Ir a explorar destinos">Explorar ahora</button>
   </nav>
 
   <!-- ===== HERO ===== -->
-  <section class="hero">
+  <section class="hero" aria-label="Sección principal">
     <div>
       <div class="hero-badge">
-        <span class="dot"></span>
+        <span class="dot" aria-hidden="true"></span>
         Turismo inteligente · Colombia & el mundo
       </div>
       <h1>Descubre<br><em>Colombia</em><br>como nunca</h1>
       <p>Destinos personalizados según el clima de hoy. Si llueve aquí, te decimos dónde brilla el sol mañana.</p>
       <div class="hero-actions">
-        <button class="btn-primary" onclick="document.getElementById('seccion-destinos').scrollIntoView({behavior:'smooth'})">🗺 Explorar destinos</button>
-        <button class="btn-secondary" onclick="document.getElementById('seccion-clima').scrollIntoView({behavior:'smooth'})">Ver clima en tiempo real</button>
+        <button class="btn-primary" onclick="document.getElementById('seccion-destinos')?.scrollIntoView({behavior:'smooth'})" aria-label="Explorar destinos">🗺 Explorar destinos</button>
+        <button class="btn-secondary" onclick="document.getElementById('seccion-clima')?.scrollIntoView({behavior:'smooth'})" aria-label="Ver clima en tiempo real">Ver clima en tiempo real</button>
       </div>
     </div>
   </section>
 
   <!-- ===== STATS ===== -->
-  <div class="stats">
+  <div class="stats" role="region" aria-label="Estadísticas">
     <div class="stat">
-      <div class="stat-num">120+</div>
+      <div class="stat-num" aria-label="120 destinos en Colombia">120+</div>
       <div class="stat-label">Destinos en Colombia</div>
     </div>
     <div class="stat">
-      <div class="stat-num">50+</div>
+      <div class="stat-num" aria-label="50 países disponibles">50+</div>
       <div class="stat-label">Países disponibles</div>
     </div>
     <div class="stat">
-      <div class="stat-num">24/7</div>
+      <div class="stat-num" aria-label="Clima disponible 24/7">24/7</div>
       <div class="stat-label">Clima actualizado</div>
     </div>
     <div class="stat">
-      <div class="stat-num">4.9★</div>
+      <div class="stat-num" aria-label="4.9 estrellas de valoración">4.9★</div>
       <div class="stat-label">Valoración usuarios</div>
     </div>
   </div>
 
   <!-- ===== BUSCADOR ===== -->
-  <section class="search-section">
+  <section class="search-section" aria-label="Buscador de destinos">
     <div class="section-title">¿A dónde quieres ir?</div>
     <div class="section-sub">Busca por lugar, clima o distancia desde tu ubicación</div>
-    <div class="search-bar">
-      <input type="text" placeholder="🔍  Ciudad, región o tipo de paisaje..." />
-      <select>
+    <div class="search-bar" role="search">
+      <input type="text" placeholder="🔍 Ciudad, región o tipo de paisaje..." aria-label="Buscar destino" />
+      <select aria-label="Filtrar por clima">
         <option>Cualquier clima</option>
         <option>☀️ Soleado</option>
         <option>🌤 Parcialmente nublado</option>
         <option>🌧 Lluvioso</option>
       </select>
-      <select>
+      <select aria-label="Filtrar por distancia">
         <option>Cualquier distancia</option>
         <option>Menos de 100 km</option>
         <option>100 – 300 km</option>
         <option>Más de 300 km</option>
       </select>
-      <button onclick="buscar()">Buscar</button>
+      <button onclick="buscar()" aria-label="Ejecutar búsqueda">Buscar</button>
     </div>
   </section>
 
   <!-- ===== DESTINOS ===== -->
-  <section class="destinos-section" id="seccion-destinos">
+  <section class="destinos-section" id="seccion-destinos" aria-label="Destinos recomendados">
     <div class="destinos-header">
       <div>
         <div class="section-title">Destinos recomendados</div>
         <div class="section-sub">Seleccionados según el clima de hoy en tu ciudad</div>
       </div>
-      <span class="ver-todos">Ver todos →</span>
+      <span class="ver-todos" role="text">Ver todos →</span>
     </div>
 
     <div class="destinos-grid">
 
       <div class="card featured">
         <div class="card-img bg-cartagena">
-          <span class="card-emoji">🏰</span>
+          <span class="card-emoji" aria-hidden="true">🏰</span>
           <span class="card-badge">☀️ Soleado hoy y mañana</span>
         </div>
         <div class="card-body">
@@ -150,13 +152,13 @@
             <span class="card-dist">~640 km</span>
           </div>
           <div class="rating">★★★★★ <span class="rating-count">4.9 (2.3k reseñas)</span></div>
-          <button class="btn-favorito" onclick="agregarAFavoritos('Cartagena de Indias', 'Bolívar · Caribe', 'soleado', 640)">❤️ Agregar a favoritos</button>
+          <button class="btn-favorito" onclick="agregarAFavoritos('Cartagena de Indias', 'Bolívar · Caribe', 'soleado', 640)" aria-label="Agregar Cartagena de Indias a favoritos">❤️ Agregar a favoritos</button>
         </div>
       </div>
 
       <div class="card">
         <div class="card-img bg-medellin">
-          <span class="card-emoji">⛵</span>
+          <span class="card-emoji" aria-hidden="true">⛵</span>
           <span class="card-badge">🌤 Parcialmente nublado</span>
         </div>
         <div class="card-body">
@@ -167,13 +169,13 @@
             <span class="card-dist">~80 km</span>
           </div>
           <div class="rating">★★★★★ <span class="rating-count">4.8 (1.7k reseñas)</span></div>
-          <button class="btn-favorito" onclick="agregarAFavoritos('Guatapé', 'Antioquia', 'nublado', 80)">❤️ Agregar a favoritos</button>
+          <button class="btn-favorito" onclick="agregarAFavoritos('Guatapé', 'Antioquia', 'nublado', 80)" aria-label="Agregar Guatapé a favoritos">❤️ Agregar a favoritos</button>
         </div>
       </div>
 
       <div class="card">
         <div class="card-img bg-amazonia">
-          <span class="card-emoji">🌿</span>
+          <span class="card-emoji" aria-hidden="true">🌿</span>
           <span class="card-badge">☀️ Soleado esta semana</span>
         </div>
         <div class="card-body">
@@ -184,13 +186,13 @@
             <span class="card-dist">~1200 km</span>
           </div>
           <div class="rating">★★★★☆ <span class="rating-count">4.7 (980 reseñas)</span></div>
-          <button class="btn-favorito" onclick="agregarAFavoritos('Leticia, Amazonas', 'Amazonas · Selva', 'soleado', 1200)">❤️ Agregar a favoritos</button>
+          <button class="btn-favorito" onclick="agregarAFavoritos('Leticia, Amazonas', 'Amazonas · Selva', 'soleado', 1200)" aria-label="Agregar Leticia, Amazonas a favoritos">❤️ Agregar a favoritos</button>
         </div>
       </div>
 
       <div class="card">
         <div class="card-img bg-guajira">
-          <span class="card-emoji">🏜</span>
+          <span class="card-emoji" aria-hidden="true">🏜</span>
           <span class="card-badge">☀️ Despejado toda la semana</span>
         </div>
         <div class="card-body">
@@ -201,7 +203,7 @@
             <span class="card-dist">~850 km</span>
           </div>
           <div class="rating">★★★★★ <span class="rating-count">4.9 (1.1k reseñas)</span></div>
-          <button class="btn-favorito" onclick="agregarAFavoritos('La Guajira', 'Guajira · Desierto', 'soleado', 850)">❤️ Agregar a favoritos</button>
+          <button class="btn-favorito" onclick="agregarAFavoritos('La Guajira', 'Guajira · Desierto', 'soleado', 850)" aria-label="Agregar La Guajira a favoritos">❤️ Agregar a favoritos</button>
         </div>
       </div>
 
@@ -209,35 +211,35 @@
   </section>
 
   <!-- ===== CLIMA INTELIGENTE ===== -->
-  <section class="clima-section" id="seccion-clima">
+  <section class="clima-section" id="seccion-clima" aria-label="Clima inteligente">
     <div class="clima-inner">
       <div class="section-title">🌦 Clima inteligente</div>
       <div class="section-sub">Hoy llueve en tu ciudad — estos destinos están soleados mañana</div>
       <div class="clima-grid">
 
         <div class="clima-card" id="clima-tuubicacion">
-          <span class="big-icon">🌧</span>
+          <span class="big-icon" aria-hidden="true">🌧</span>
           <h4 id="ciudad-actual">Tu ubicación</h4>
           <p>Detectada automáticamente · Lluvia por la tarde</p>
           <span class="clima-tag tag-rain">Lluvia hoy</span>
         </div>
 
         <div class="clima-card" id="clima-cartagena">
-          <span class="big-icon">☀️</span>
+          <span class="big-icon" aria-hidden="true">☀️</span>
           <h4>Cartagena</h4>
           <p>Soleado todo el fin de semana · 32°C</p>
           <span class="clima-tag tag-ok">Ideal mañana</span>
         </div>
 
         <div class="clima-card" id="clima-santamarta">
-          <span class="big-icon">🌤</span>
+          <span class="big-icon" aria-hidden="true">🌤</span>
           <h4>Santa Marta</h4>
           <p>Parcialmente nublado · 29°C · Brisa marina</p>
           <span class="clima-tag tag-ok">Ideal mañana</span>
         </div>
 
         <div class="clima-card" id="clima-sanandres">
-          <span class="big-icon">☀️</span>
+          <span class="big-icon" aria-hidden="true">☀️</span>
           <h4>San Andrés</h4>
           <p>Despejado toda la semana · 31°C · Mar tranquilo</p>
           <span class="clima-tag tag-ok">Perfecto ahora</span>
@@ -248,28 +250,28 @@
   </section>
 
   <!-- ===== INFO: UBICACIÓN, HORARIO, DISTANCIA ===== -->
-  <section class="info-section">
+  <section class="info-section" aria-label="Características principales">
     <div class="info-inner">
       <div class="info-card">
-        <div class="info-icon">📍</div>
+        <div class="info-icon" aria-hidden="true">📍</div>
         <h4>Tu ubicación</h4>
         <p>Detectamos tu ciudad automáticamente para mostrarte los destinos más cercanos y relevantes.</p>
         <span class="info-live">🟢 GPS en tiempo real</span>
       </div>
       <div class="info-card">
-        <div class="info-icon">🕐</div>
+        <div class="info-icon" aria-hidden="true">🕐</div>
         <h4>Horario local</h4>
         <p>Cada destino muestra su huso horario, horarios de atracción y mejor momento para visitar.</p>
         <span class="info-live" id="hora-actual">🕒 Cargando hora...</span>
       </div>
       <div class="info-card">
-        <div class="info-icon">🚗</div>
+        <div class="info-icon" aria-hidden="true">🚗</div>
         <h4>Distancia exacta</h4>
         <p>Calcula cuánto tiempo y distancia hay desde donde estás hasta cualquier destino.</p>
         <span class="info-live">📡 Cálculo en vivo</span>
       </div>
       <div class="info-card">
-        <div class="info-icon">🌦</div>
+        <div class="info-icon" aria-hidden="true">🌦</div>
         <h4>Clima por días</h4>
         <p>Mira el pronóstico de 7 días para planear tu viaje en el momento perfecto.</p>
         <span class="info-live">⚡ Pronóstico 7 días</span>
@@ -278,13 +280,13 @@
   </section>
 
   <!-- ===== HOSPEDAJE ===== -->
-  <section class="hospedaje-section" id="seccion-hospedaje">
+  <section class="hospedaje-section" id="seccion-hospedaje" aria-label="Hospedaje recomendado">
     <div class="section-title">Hospedaje recomendado</div>
     <div class="section-sub">Hoteles, hostales y posadas con mejor valoración</div>
     <div class="hospedaje-grid">
 
       <div class="hostal-card">
-        <div class="hostal-avatar" style="background:#E1F5EE;">🏨</div>
+        <div class="hostal-avatar" style="background:#E1F5EE;" aria-hidden="true">🏨</div>
         <div class="hostal-info">
           <h4>Hotel Casa San Agustín</h4>
           <p>Cartagena · Centro Histórico</p>
@@ -294,7 +296,7 @@
       </div>
 
       <div class="hostal-card">
-        <div class="hostal-avatar" style="background:#FAF3DE;">🛖</div>
+        <div class="hostal-avatar" style="background:#FAF3DE;" aria-hidden="true">🛖</div>
         <div class="hostal-info">
           <h4>Ranchería Utta</h4>
           <p>La Guajira · Experiencia wayuu</p>
@@ -304,7 +306,7 @@
       </div>
 
       <div class="hostal-card">
-        <div class="hostal-avatar" style="background:#EAF3DE;">🌿</div>
+        <div class="hostal-avatar" style="background:#EAF3DE;" aria-hidden="true">🌿</div>
         <div class="hostal-info">
           <h4>Maloca Amazónica</h4>
           <p>Leticia · Selva amazónica</p>
@@ -314,7 +316,7 @@
       </div>
 
       <div class="hostal-card">
-        <div class="hostal-avatar" style="background:#E1F5EE;">⛺</div>
+        <div class="hostal-avatar" style="background:#E1F5EE;" aria-hidden="true">⛺</div>
         <div class="hostal-info">
           <h4>El Peñol Hostal</h4>
           <p>Guatapé · Lago · Vista panorámica</p>
@@ -327,9 +329,9 @@
   </section>
 
   <!-- ===== FOOTER ===== -->
-  <footer>
+  <footer role="contentinfo">
     <div class="footer-logo">
-      <img src="assets/logotipo.png" alt="Turisco Logotype" class="footer-logo-img">
+      <img src="assets/logotipo.png" alt="Turisco Logotype" class="footer-logo-img" width="auto" height="50">
     </div>
     <p>Turismo inteligente para Colombia y el mundo</p>
     <p class="footer-version">Versión 0.2 · Con autenticación</p>

@@ -1,68 +1,64 @@
 // =============================================
-//  TURISCO - main.js (modificado para seguridad y robustez)
-//  - Usar CONFIG inyectada desde servidor/CI (window.__TURISCO_CONFIG__)
-//  - OpenRouteService via POST con Authorization header (mejor práctica)
-//  - Nominatim: agregar parámetros de contacto/idioma
-//  - Guardar coordenadas reales al persistir búsquedas
-//  - Mejor manejo de errores al agregar favoritos
+//  TURISCO - main.js
+//  Funcionalidad principal: clima, ubicación, búsqueda, favoritos
 // =============================================
 
 const CONFIG = window.__TURISCO_CONFIG__ || {
   API_KEY_CLIMA: 'REPLACE_WITH_YOUR_OPENWEATHER_KEY',
   ORS_KEY: 'REPLACE_WITH_YOUR_OPENROUTESERVICE_KEY',
-  CONTACT_EMAIL: 'tu-email@dominio.com' // para Nominatim
+  CONTACT_EMAIL: 'tu-email@dominio.com'
 };
 
 const API_KEY_CLIMA = CONFIG.API_KEY_CLIMA;
 const OPEN_ROUTE_SERVICE_API = 'https://api.openrouteservice.org/v2/directions/driving-car/geojson';
 
 // =============================================
-// Función para obtener tiempo y distancia entre dos puntos (OpenRouteService)
+// Distancia y Tiempo
 // =============================================
 async function calcularDistanciaYTiempo(latOrigen, lonOrigen, latDestino, lonDestino) {
   try {
-    if (!CONFIG.ORS_KEY) {
-      console.warn('ORS key no configurada (usar proxy en servidor es más seguro)');
+    if (!CONFIG.ORS_KEY || CONFIG.ORS_KEY.startsWith('REPLACE_')) {
+      console.warn('ORS key no configurada');
       return null;
     }
 
-    const body = {
-      coordinates: [
-        [lonOrigen, latOrigen],
-        [lonDestino, latDestino]
-      ]
-    };
+    if (![latOrigen, lonOrigen, latDestino, lonDestino].every(Number.isFinite)) {
+      console.warn('Coordenadas inválidas');
+      return null;
+    }
 
     const res = await fetch(OPEN_ROUTE_SERVICE_API, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': CONFIG.ORS_KEY
-      },
-      body: JSON.stringify(body)
+      headers: { 'Content-Type': 'application/json', 'Authorization': CONFIG.ORS_KEY },
+      body: JSON.stringify({ coordinates: [[lonOrigen, latOrigen], [lonDestino, latDestino]] })
     });
 
     if (!res.ok) {
-      console.warn('OpenRouteService responded with', res.status);
+      console.warn(`OpenRouteService error: ${res.status}`);
       return null;
     }
 
     const data = await res.json();
+    if (!data || typeof data !== 'object') {
+      console.warn('Respuesta inválida de ORS');
+      return null;
+    }
 
-    // Diferentes formatos de respuesta: try to read common fields
-    const summary = (data.features && data.features[0] && data.features[0].properties && data.features[0].properties.summary) ||
-                    (data.routes && data.routes[0] && data.routes[0].summary) || null;
+    let distanciaMetros = null, tiempoSegundos = null;
 
-    let distanciaMetros = null;
-    let tiempoSegundos = null;
-    if (summary) {
-      distanciaMetros = summary.distance;
-      tiempoSegundos = summary.duration;
-    } else if (data.routes && data.routes[0] && data.routes[0].segments && data.routes[0].segments[0]) {
+    if (data.features?.[0]?.properties?.summary) {
+      distanciaMetros = data.features[0].properties.summary.distance;
+      tiempoSegundos = data.features[0].properties.summary.duration;
+    } else if (data.routes?.[0]?.summary) {
+      distanciaMetros = data.routes[0].summary.distance;
+      tiempoSegundos = data.routes[0].summary.duration;
+    } else if (data.routes?.[0]?.segments?.[0]) {
       distanciaMetros = data.routes[0].segments[0].distance;
       tiempoSegundos = data.routes[0].segments[0].duration;
-    } else {
-      console.warn('Formato de respuesta ORS inesperado', data);
+    }
+
+    if (!Number.isFinite(distanciaMetros) || !Number.isFinite(tiempoSegundos)) {
+      console.warn('Formato de respuesta ORS inesperado');
       return null;
     }
 
@@ -72,8 +68,8 @@ async function calcularDistanciaYTiempo(latOrigen, lonOrigen, latDestino, lonDes
 
     return {
       distanciaKm: parseFloat(distanciaKm),
-      distanciaMetros,
-      tiempoSegundos,
+      distanciaMetros: Math.round(distanciaMetros),
+      tiempoSegundos: Math.round(tiempoSegundos),
       tiempoFormato: `${tiempoHoras}h ${tiempoMinutos}m`,
       tiempoHoras,
       tiempoMinutos
@@ -85,24 +81,42 @@ async function calcularDistanciaYTiempo(latOrigen, lonOrigen, latDestino, lonDes
 }
 
 // =============================================
-// Obtener coordenadas con Nominatim (agrega contacto y idioma)
+// Obtener Coordenadas (Nominatim)
 // =============================================
 async function obtenerCoordenadas(ciudad) {
   try {
-    const extras = `&format=json&limit=1&accept-language=es&email=${encodeURIComponent(CONFIG.CONTACT_EMAIL)}`;
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(ciudad)}${extras}`;
-    const response = await fetch(url, { headers: { 'Referer': location.origin } });
+    if (!ciudad || typeof ciudad !== 'string' || ciudad.trim().length === 0) {
+      console.warn('Ciudad inválida:', ciudad);
+      return null;
+    }
+
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(ciudad)}&format=json&limit=1&accept-language=es&email=${encodeURIComponent(CONFIG.CONTACT_EMAIL)}`;
+    
+    const response = await fetch(url, { headers: { 'User-Agent': 'Turisco-App' } });
+    
+    if (!response.ok) {
+      console.warn(`Nominatim error: ${response.status}`);
+      return null;
+    }
+
     const data = await response.json();
 
-    if (!data || data.length === 0) {
+    if (!Array.isArray(data) || data.length === 0) {
       console.warn(`No se encontraron coordenadas para: ${ciudad}`);
       return null;
     }
 
+    const { lat, lon, display_name } = data[0];
+    
+    if (!Number.isFinite(parseFloat(lat)) || !Number.isFinite(parseFloat(lon))) {
+      console.warn('Coordenadas inválidas recibidas');
+      return null;
+    }
+
     return {
-      latitud: parseFloat(data[0].lat),
-      longitud: parseFloat(data[0].lon),
-      nombre: data[0].display_name
+      latitud: parseFloat(lat),
+      longitud: parseFloat(lon),
+      nombre: display_name || ciudad
     };
   } catch (error) {
     console.error(`Error obteniendo coordenadas para ${ciudad}:`, error);
@@ -111,22 +125,35 @@ async function obtenerCoordenadas(ciudad) {
 }
 
 // =============================================
-// Funciones de BD y favoritos (mejor manejo de errores)
+// Esperar Base de Datos
 // =============================================
 async function esperarBaseDatos(timeout = 5000) {
-  const inicio = Date.now();
-  while (!window.turiscoDb || !turiscoDb.db) {
-    if (Date.now() - inicio > timeout) {
-      console.warn('Timeout esperando BD');
-      return false;
+  try {
+    const inicio = Date.now();
+    while (!window.turiscoDb?.db) {
+      if (Date.now() - inicio > timeout) {
+        console.warn('Timeout esperando BD');
+        return false;
+      }
+      await new Promise(r => setTimeout(r, 100));
     }
-    await new Promise(r => setTimeout(r, 100));
+    return true;
+  } catch (error) {
+    console.error('Error esperando BD:', error);
+    return false;
   }
-  return true;
 }
 
+// =============================================
+// Favoritos
+// =============================================
 async function agregarAFavoritos(nombreDestino, region, clima, distancia) {
   try {
+    if (!nombreDestino || typeof nombreDestino !== 'string') {
+      alert('⚠️ Destino inválido');
+      return;
+    }
+
     const bDisponible = await esperarBaseDatos();
     if (!bDisponible) {
       alert('⚠️ La base de datos no está disponible');
@@ -136,11 +163,11 @@ async function agregarAFavoritos(nombreDestino, region, clima, distancia) {
     const coordDestino = await obtenerCoordenadas(nombreDestino);
     const coordenadas = coordDestino ? { latitud: coordDestino.latitud, longitud: coordDestino.longitud } : null;
 
-    await turiscoDb.agregarFavorito(nombreDestino, region, clima, distancia, coordenadas);
+    await window.turiscoDb.agregarFavorito(nombreDestino, region || '', clima || '', distancia || 0, coordenadas);
     alert(`❤️ ${nombreDestino} agregado a favoritos!`);
   } catch (error) {
     console.error('Error agregando favorito:', error);
-    if (error && error.name === 'ConstraintError') {
+    if (error?.name === 'ConstraintError') {
       alert('⚠️ Este destino ya está en favoritos');
     } else {
       alert('⚠️ Error al guardar favorito');
@@ -148,7 +175,6 @@ async function agregarAFavoritos(nombreDestino, region, clima, distancia) {
   }
 }
 
-// Mostrar favoritos (sin cambios funcionales)
 async function mostrarFavoritos() {
   try {
     const bDisponible = await esperarBaseDatos();
@@ -157,34 +183,35 @@ async function mostrarFavoritos() {
       return;
     }
 
-    const favoritos = await turiscoDb.obtenerFavoritos();
+    const favoritos = await window.turiscoDb.obtenerFavoritos();
     if (!favoritos || favoritos.length === 0) {
       alert('📌 Aún no tienes destinos favoritos. ¡Agrega algunos!');
       return;
     }
-    const lista = favoritos.map(f => `❤️ ${f.nombreDestino} (${f.region}) - ${f.distancia}km`).join('\n');
+
+    const lista = favoritos.map(f => `❤️ ${f.nombreDestino} (${f.region}) - ${f.distancia || '?'}km`).join('\n');
     alert(`Tus favoritos:\n\n${lista}`);
   } catch (error) {
     console.error('Error mostrando favoritos:', error);
+    alert('⚠️ Error al obtener favoritos');
   }
 }
 
-// Guardar búsqueda en la base de datos
 async function guardarBusquedaEnBD(destino, lat, lon, clima) {
   try {
     const bDisponible = await esperarBaseDatos();
     if (!bDisponible) {
-      console.warn('⚠️ BD no disponible para guardar búsqueda');
+      console.warn('BD no disponible para guardar búsqueda');
       return;
     }
-    await turiscoDb.guardarBusqueda(destino, lat, lon, clima);
-    console.log('📝 Búsqueda guardada en la base de datos');
+
+    await window.turiscoDb.guardarBusqueda(destino, lat, lon, clima);
+    console.log('📝 Búsqueda guardada');
   } catch (error) {
     console.error('Error guardando búsqueda:', error);
   }
 }
 
-// Ver historial
 async function verHistorial() {
   try {
     const bDisponible = await esperarBaseDatos();
@@ -193,11 +220,12 @@ async function verHistorial() {
       return;
     }
 
-    const historial = await turiscoDb.obtenerHistorial(10);
+    const historial = await window.turiscoDb.obtenerHistorial(10);
     if (!historial || historial.length === 0) {
       alert('📜 No hay historial de búsquedas aún.');
       return;
     }
+
     const lista = historial.map(h => `🔍 ${h.destino} (${h.fechaLegible})`).join('\n');
     alert(`Últimas 10 búsquedas:\n\n${lista}`);
   } catch (error) {
@@ -206,65 +234,77 @@ async function verHistorial() {
 }
 
 // =============================================
-// Hora local
+// Hora Local
 // =============================================
 function actualizarHora() {
   try {
     const horaFormateada = new Date().toLocaleTimeString('es-CO', {
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
     });
     const el = document.getElementById('hora-actual');
     if (el) el.textContent = '🕒 ' + horaFormateada;
-  } catch (e) {
-    console.error('Error actualizando hora:', e);
+  } catch (error) {
+    console.error('Error actualizando hora:', error);
   }
 }
+
 actualizarHora();
 setInterval(actualizarHora, 1000);
 
 // =============================================
-// Detectar ubicación
+// Ubicación
 // =============================================
 let coordenadasUsuario = null;
 
 function detectarUbicacion() {
   const el = document.getElementById('ciudad-actual');
+  
   if (!navigator.geolocation) {
     if (el) el.textContent = 'Ubicación no disponible';
+    console.warn('Geolocation no soportado');
     return;
   }
+
   navigator.geolocation.getCurrentPosition(
-    function (pos) {
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
+    async (pos) => {
+      const { latitude: lat, longitude: lon } = pos.coords;
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        console.warn('Coordenadas inválidas');
+        return;
+      }
 
       coordenadasUsuario = { latitud: lat, longitud: lon };
       obtenerClimaUbicacion(lat, lon);
 
-      fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=es&email=' + encodeURIComponent(CONFIG.CONTACT_EMAIL))
-        .then(r => r.json())
-        .then(data => {
-          if (data && data.address) {
-            const ciudad = data.address.city || data.address.town || data.address.village || 'Tu ciudad';
-            if (el) el.textContent = ciudad;
-          } else {
-            if (el) el.textContent = 'Tu ubicación';
-          }
-        })
-        .catch(err => { 
-          console.error('Error detectando ubicación:', err);
-          if (el) el.textContent = 'Tu ubicación'; 
-        });
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es&email=${encodeURIComponent(CONFIG.CONTACT_EMAIL)}`;
+        const response = await fetch(url, { headers: { 'User-Agent': 'Turisco-App' } });
+        const data = await response.json();
+
+        if (data?.address) {
+          const ciudad = data.address.city || data.address.town || data.address.village || 'Tu ciudad';
+          if (el) el.textContent = ciudad;
+        } else {
+          if (el) el.textContent = 'Tu ubicación';
+        }
+      } catch (err) {
+        console.error('Error detectando ubicación:', err);
+        if (el) el.textContent = 'Tu ubicación';
+      }
     },
-    function (err) { 
-      console.error('Geolocation error:', err);
-      if (el) el.textContent = 'Medellín'; 
+    (err) => {
+      console.error('Geolocation error:', err.message);
+      if (el) el.textContent = 'Medellín';
     }
   );
 }
 
 // =============================================
-// Clima (OpenWeatherMap)
+// Clima
 // =============================================
 function obtenerIconoClima(id) {
   if (id >= 200 && id < 300) return '⛈';
@@ -278,141 +318,177 @@ function obtenerIconoClima(id) {
 }
 
 function obtenerEtiqueta(id) {
-  if (id >= 200 && id < 600) return { texto: 'Lluvia hoy', clase: 'tag-rain' };
-  return { texto: 'Buen clima', clase: 'tag-ok' };
+  return (id >= 200 && id < 600) 
+    ? { texto: 'Lluvia hoy', clase: 'tag-rain' }
+    : { texto: 'Buen clima', clase: 'tag-ok' };
 }
 
 function obtenerClimaUbicacion(lat, lon) {
-  if (!API_KEY_CLIMA) {
+  if (!API_KEY_CLIMA || API_KEY_CLIMA.startsWith('REPLACE_')) {
     console.warn('OpenWeather API key no configurada');
     return;
   }
-  fetch('https://api.openweathermap.org/data/2.5/weather?lat=' + lat + '&lon=' + lon + '&appid=' + API_KEY_CLIMA + '&units=metric&lang=es')
-    .then(r => r.json())
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    console.warn('Coordenadas inválidas para clima');
+    return;
+  }
+
+  fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY_CLIMA}&units=metric&lang=es`)
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
     .then(data => {
-      if (!data || !data.main || !data.weather || data.weather.length === 0) {
+      if (!data?.main?.temp || !data?.weather?.[0]) {
         console.warn('Datos de clima incompletos');
         return;
       }
 
-      const temp  = Math.round(data.main.temp);
-      const id    = data.weather[0].id;
-      const desc  = data.weather[0].description || 'Clima';
+      const temp = Math.round(data.main.temp);
+      const { id, description } = data.weather[0];
       const icono = obtenerIconoClima(id);
-      const etiq  = obtenerEtiqueta(id);
+      const etiq = obtenerEtiqueta(id);
 
       const iconoEl = document.querySelector('#clima-tuubicacion .big-icon');
-      const descEl  = document.querySelector('#clima-tuubicacion p');
-      const tagEl   = document.querySelector('#clima-tuubicacion .clima-tag');
+      const descEl = document.querySelector('#clima-tuubicacion p');
+      const tagEl = document.querySelector('#clima-tuubicacion .clima-tag');
 
       if (iconoEl) iconoEl.textContent = icono;
-      if (descEl)  descEl.textContent  = temp + '°C · ' + desc;
-      if (tagEl)   { 
-        tagEl.textContent = etiq.texto; 
-        tagEl.className = 'clima-tag ' + etiq.clase; 
+      if (descEl) descEl.textContent = `${temp}°C · ${description || 'Clima'}`;
+      if (tagEl) {
+        tagEl.textContent = etiq.texto;
+        tagEl.className = 'clima-tag ' + etiq.clase;
       }
     })
-    .catch(err => console.error('No se pudo obtener el clima de tu ubicación:', err));
+    .catch(err => console.error('Error obteniendo clima:', err));
 }
 
 function obtenerClimaCiudad(ciudad, elementoId) {
   if (!ciudad || !elementoId || typeof elementoId !== 'string') {
-    console.warn('Parámetros inválidos en obtenerClimaCiudad:', ciudad, elementoId);
+    console.warn('Parámetros inválidos en obtenerClimaCiudad');
     return;
   }
 
-  if (!API_KEY_CLIMA) {
+  if (!API_KEY_CLIMA || API_KEY_CLIMA.startsWith('REPLACE_')) {
     console.warn('OpenWeather API key no configurada');
     return;
   }
 
-  fetch('https://api.openweathermap.org/data/2.5/weather?q=' + encodeURIComponent(ciudad) + '&appid=' + API_KEY_CLIMA + '&units=metric&lang=es')
-    .then(r => r.json())
+  fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(ciudad)}&appid=${API_KEY_CLIMA}&units=metric&lang=es`)
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
     .then(data => {
-      if (!data || !data.main || !data.weather || data.weather.length === 0) {
-        console.warn('Datos de clima incompletos para:', ciudad);
+      if (!data?.main?.temp || !data?.weather?.[0]) {
+        console.warn(`Datos de clima incompletos para: ${ciudad}`);
         return;
       }
 
-      const temp  = Math.round(data.main.temp);
-      const id    = data.weather[0].id;
-      const desc  = data.weather[0].description || 'Clima';
+      const temp = Math.round(data.main.temp);
+      const { id, description } = data.weather[0];
       const icono = obtenerIconoClima(id);
-      const etiq  = obtenerEtiqueta(id);
+      const etiq = obtenerEtiqueta(id);
 
-      const iconoEl = document.querySelector('#' + elementoId + ' .big-icon');
-      const descEl  = document.querySelector('#' + elementoId + ' p');
-      const tagEl   = document.querySelector('#' + elementoId + ' .clima-tag');
+      const iconoEl = document.querySelector(`#${elementoId} .big-icon`);
+      const descEl = document.querySelector(`#${elementoId} p`);
+      const tagEl = document.querySelector(`#${elementoId} .clima-tag`);
 
       if (iconoEl) iconoEl.textContent = icono;
-      if (descEl)  descEl.textContent  = temp + '°C · ' + desc;
-      if (tagEl)   { 
-        tagEl.textContent = etiq.texto; 
-        tagEl.className = 'clima-tag ' + etiq.clase; 
+      if (descEl) descEl.textContent = `${temp}°C · ${description || 'Clima'}`;
+      if (tagEl) {
+        tagEl.textContent = etiq.texto;
+        tagEl.className = 'clima-tag ' + etiq.clase;
       }
     })
-    .catch(err => console.error('Error clima para', ciudad + ':', err));
+    .catch(err => console.error(`Error clima para ${ciudad}:`, err));
 }
 
-// Llamadas iniciales
-obtenerClimaCiudad('Cartagena,CO',  'clima-cartagena');
-obtenerClimaCiudad('Santa Marta,CO','clima-santamarta');
+obtenerClimaCiudad('Cartagena,CO', 'clima-cartagena');
+obtenerClimaCiudad('Santa Marta,CO', 'clima-santamarta');
 obtenerClimaCiudad('San Andres,CO', 'clima-sanandres');
 
 detectarUbicacion();
 
 // =============================================
-// Buscador: usar coordenadas reales y guardar búsquedas en paralelo
+// Destinos y Buscador
 // =============================================
 const destinos = [
-  { nombre: 'Cartagena de Indias', region: 'Bolívar · Caribe',  clima: 'soleado', distancia: 640, ciudad: 'Cartagena' },
-  { nombre: 'Guatapé',             region: 'Antioquia',          clima: 'nublado', distancia: 80,   ciudad: 'Guatapé' },
-  { nombre: 'Leticia, Amazonas',   region: 'Amazonas · Selva',   clima: 'soleado', distancia: 1200, ciudad: 'Leticia' },
-  { nombre: 'La Guajira',          region: 'Guajira · Desierto', clima: 'soleado', distancia: 850,  ciudad: 'Riohacha' },
-  { nombre: 'Santa Marta',         region: 'Magdalena · Caribe', clima: 'nublado', distancia: 700,  ciudad: 'Santa Marta' },
-  { nombre: 'San Andrés',          region: 'Isla · Caribe',      clima: 'soleado', distancia: 1300, ciudad: 'San Andrés' },
-  { nombre: 'Villa de Leyva',      region: 'Boyacá',             clima: 'soleado', distancia: 350,  ciudad: 'Villa de Leyva' },
+  { nombre: 'Cartagena de Indias', region: 'Bolívar · Caribe', clima: 'soleado', distancia: 640, ciudad: 'Cartagena' },
+  { nombre: 'Guatapé', region: 'Antioquia', clima: 'nublado', distancia: 80, ciudad: 'Guatapé' },
+  { nombre: 'Leticia, Amazonas', region: 'Amazonas · Selva', clima: 'soleado', distancia: 1200, ciudad: 'Leticia' },
+  { nombre: 'La Guajira', region: 'Guajira · Desierto', clima: 'soleado', distancia: 850, ciudad: 'Riohacha' },
+  { nombre: 'Santa Marta', region: 'Magdalena · Caribe', clima: 'nublado', distancia: 700, ciudad: 'Santa Marta' },
+  { nombre: 'San Andrés', region: 'Isla · Caribe', clima: 'soleado', distancia: 1300, ciudad: 'San Andrés' },
+  { nombre: 'Villa de Leyva', region: 'Boyacá', clima: 'soleado', distancia: 350, ciudad: 'Villa de Leyva' }
 ];
 
 async function buscar() {
   try {
     const inputEl = document.querySelector('.search-bar input');
-    const termino = inputEl ? inputEl.value.trim().toLowerCase() : '';
+    const climaSelect = document.querySelector('.search-bar select:nth-of-type(1)');
+    const distanciaSelect = document.querySelector('.search-bar select:nth-of-type(2)');
+
+    const termino = (inputEl?.value || '').trim().toLowerCase();
+    const climaFiltro = (climaSelect?.value || '').toLowerCase();
+    const distanciaFiltro = distanciaSelect?.value || '';
 
     if (!termino) {
-      alert('✈️ Escribe un destino para buscar, por ejemplo: Cartagena, Amazonas, Guajira...');
+      alert('✈️ Escribe un destino para buscar');
       return;
     }
 
-    const resultados = destinos.filter(d =>
+    let resultados = destinos.filter(d =>
       d.nombre.toLowerCase().includes(termino) ||
       d.region.toLowerCase().includes(termino)
     );
 
+    // Filtrar por clima
+    if (climaFiltro && climaFiltro !== 'cualquier clima') {
+      const climaBuscado = climaFiltro.split(' ').pop(); // extrae "soleado", "nublado", etc.
+      resultados = resultados.filter(d => d.clima.toLowerCase().includes(climaBuscado));
+    }
+
+    // Filtrar por distancia
+    if (distanciaFiltro && distanciaFiltro !== 'Cualquier distancia') {
+      if (distanciaFiltro === 'Menos de 100 km') {
+        resultados = resultados.filter(d => d.distancia < 100);
+      } else if (distanciaFiltro === '100 – 300 km') {
+        resultados = resultados.filter(d => d.distancia >= 100 && d.distancia <= 300);
+      } else if (distanciaFiltro === 'Más de 300 km') {
+        resultados = resultados.filter(d => d.distancia > 300);
+      }
+    }
+
     if (resultados.length === 0) {
-      alert('No encontramos "' + termino + '".\nIntenta con: Cartagena, Guatapé, Amazonas, Guajira...');
+      alert(`No encontramos "${termino}" con esos filtros.\nIntenta con: Cartagena, Guatapé, Amazonas, Guajira...`);
       return;
     }
 
-    const lista = resultados.map(d => '📍 ' + d.nombre + ' — ' + d.region).join('\n');
-    alert('Resultados para "' + termino + '":\n\n' + lista + '\n\n(Próximamente como tarjetas 🚀)');
+    const lista = resultados.map(d => `📍 ${d.nombre} — ${d.region}`).join('\n');
+    alert(`Resultados para "${termino}":\n\n${lista}\n\n(Próximamente como tarjetas 🚀)`);
 
-    // Guardar búsquedas: obtener coordenadas en paralelo y guardarlas
+    // Guardar búsquedas en paralelo
     const tareas = resultados.map(async destino => {
       const coord = await obtenerCoordenadas(destino.ciudad).catch(() => null);
-      const lat = coord ? coord.latitud : null;
-      const lon = coord ? coord.longitud : null;
+      const lat = coord?.latitud || null;
+      const lon = coord?.longitud || null;
       return guardarBusquedaEnBD(destino.nombre, lat, lon, destino.clima);
     });
-    // No esperamos el resultado en UI, pero registramos fallos en consola
+
     Promise.allSettled(tareas).then(results => {
-      results.forEach((r, i) => { if (r.status === 'rejected') console.warn('guardarBusqueda falló para', resultados[i].nombre, r.reason); });
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          console.warn(`guardarBusqueda falló para ${resultados[i]?.nombre}:`, r.reason);
+        }
+      });
     });
 
-    // Opcional: calcular distancias si tenemos coordenadas del usuario
+    // Calcular distancias reales si tenemos ubicación del usuario
     if (coordenadasUsuario) {
-      resultados.forEach(async (destino) => {
-        const coordDestino = await obtenerCoordenadas(destino.ciudad);
+      resultados.forEach(async destino => {
+        const coordDestino = await obtenerCoordenadas(destino.ciudad).catch(() => null);
         if (coordDestino) {
           const distancia = await calcularDistanciaYTiempo(
             coordenadasUsuario.latitud,
@@ -426,9 +502,8 @@ async function buscar() {
         }
       });
     }
-
-  } catch (e) {
-    console.error('Error en función buscar:', e);
+  } catch (error) {
+    console.error('Error en función buscar:', error);
     alert('Ocurrió un error en la búsqueda. Por favor, intenta de nuevo.');
   }
 }

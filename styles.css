@@ -45,14 +45,15 @@ nav {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--borde);
-  gap: 2rem;
-  flex-wrap: wrap;
+  gap: 1.5rem;
+  flex-wrap: nowrap;
 }
 
 .nav-logo {
   display: flex;
   align-items: center;
   min-width: 50px;
+  flex-shrink: 0;
 }
 
 .nav-logo-img {
@@ -64,10 +65,11 @@ nav {
 
 .nav-links {
   display: flex;
-  gap: 2.5rem;
+  gap: 2rem;
   list-style: none;
   flex: 1;
-  min-width: 300px;
+  min-width: auto;
+  align-items: center;
 }
 
 .nav-links a {
@@ -96,6 +98,7 @@ nav {
   cursor: pointer;
   transition: background 0.2s;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nav-cta:hover,
@@ -107,21 +110,23 @@ nav {
 /* ---- Sección de autenticación en nav ---- */
 .nav-auth {
   display: flex !important;
-  gap: 1rem;
+  gap: 0.75rem;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .nav-btn-login, .nav-btn-register {
   border: none;
-  padding: 0.7rem 1.3rem;
+  padding: 0.65rem 1.2rem;
   border-radius: 100px;
   font-size: 0.88rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nav-btn-login {
@@ -149,10 +154,11 @@ nav {
 
 .nav-user {
   display: flex !important;
-  gap: 1.2rem;
+  gap: 0.75rem;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .user-greeting {
@@ -166,13 +172,14 @@ nav {
   background: var(--rojo);
   color: white;
   border: none;
-  padding: 0.7rem 1.3rem;
+  padding: 0.65rem 1.2rem;
   border-radius: 100px;
   font-size: 0.88rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nav-btn-logout:hover {
@@ -988,26 +995,48 @@ html {
 /* =============================================
    MEDIA QUERIES - RESPONSIVE
    ============================================= */
+
+/* Tablets y pantallas medianas */
 @media (max-width: 1024px) {
   nav {
     padding: 0.8rem 1.5rem;
-    gap: 1.5rem;
+    gap: 1rem;
   }
 
   .nav-links {
     gap: 1.5rem;
+    flex: 0.8;
+    min-width: auto;
+  }
+
+  .nav-auth,
+  .nav-user {
+    gap: 0.5rem;
+  }
+
+  .nav-btn-login, 
+  .nav-btn-register,
+  .nav-btn-logout {
+    padding: 0.6rem 1rem;
+    font-size: 0.82rem;
+  }
+
+  .nav-cta {
+    padding: 0.65rem 1.3rem;
+    font-size: 0.85rem;
   }
 }
 
+/* Celulares */
 @media (max-width: 768px) {
   nav {
-    padding: 0.8rem 1rem;
-    gap: 1rem;
     flex-wrap: wrap;
+    padding: 0.8rem 1rem;
+    gap: 0.75rem;
   }
 
   .nav-logo {
-    min-width: 40px;
+    min-width: auto;
   }
 
   .nav-logo-img {
@@ -1015,26 +1044,50 @@ html {
   }
 
   .nav-links {
-    gap: 1rem;
-    min-width: 100%;
-    flex: 0 1 100%;
     order: 3;
+    width: 100%;
+    gap: 1.2rem;
+    flex: none;
+    justify-content: flex-start;
+    font-size: 0.9rem;
   }
 
   .nav-links a {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
 
   .nav-auth,
   .nav-user {
-    min-width: 100%;
-    flex: 0 1 100%;
-    order: 4;
-    justify-content: center;
+    gap: 0.5rem;
+    order: 2;
+  }
+
+  .nav-btn-login, 
+  .nav-btn-register,
+  .nav-btn-logout {
+    padding: 0.55rem 0.9rem;
+    font-size: 0.78rem;
   }
 
   .nav-cta {
-    display: none;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.8rem;
+    order: 1;
+  }
+
+  .user-greeting {
+    font-size: 0.85rem;
+  }
+
+  /* Secciones */
+  .search-section,
+  .destinos-section,
+  .hospedaje-section {
+    padding: 3rem 1rem;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
   }
 
   .hero {
@@ -1045,205 +1098,8 @@ html {
     font-size: clamp(2rem, 6vw, 4rem);
   }
 
-  .hero p {
-    font-size: 1rem;
-  }
-
-  .hero-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
-    max-width: 300px;
-  }
-
   .stats {
-    flex-direction: column;
     gap: 1.5rem;
-    max-width: 100%;
-    margin: -0.5rem auto 0;
-  }
-
-  .search-section {
-    padding: 3rem 1rem 2rem;
-  }
-
-  .search-bar {
-    flex-direction: column;
-  }
-
-  .search-bar input,
-  .search-bar select,
-  .search-bar button {
-    width: 100%;
-    min-width: auto;
-  }
-
-  .section-title {
-    font-size: 1.8rem;
-  }
-
-  .section-sub {
-    font-size: 0.9rem;
-  }
-
-  .destinos-section {
-    padding: 2rem 1rem 3rem;
-  }
-
-  .destinos-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-  }
-
-  .card-img {
-    height: 150px;
-  }
-
-  .card.featured .card-img {
-    height: 150px;
-  }
-
-  .card-title {
-    font-size: 1.1rem;
-  }
-
-  .card-body {
-    padding: 1rem;
-  }
-
-  .clima-section {
-    padding: 2rem 1rem;
-  }
-
-  .clima-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
-
-  .big-icon {
-    font-size: 2rem;
-  }
-
-  .info-section {
-    padding: 2rem 1rem;
-  }
-
-  .info-inner {
-    gap: 1rem;
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .info-icon {
-    font-size: 1.8rem;
-  }
-
-  .info-card h4 {
-    font-size: 1rem;
-  }
-
-  .info-card p {
-    font-size: 0.8rem;
-  }
-
-  .hospedaje-section {
-    padding: 3rem 1rem;
-  }
-
-  .hospedaje-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .hostal-card {
-    gap: 0.75rem;
-    padding: 1rem;
-  }
-
-  .hostal-avatar {
-    width: 48px;
-    height: 48px;
-    font-size: 1.4rem;
-  }
-
-  .hostal-info h4 {
-    font-size: 0.95rem;
-  }
-
-  .hostal-info p {
-    font-size: 0.75rem;
-  }
-
-  footer {
-    padding: 1.5rem;
-  }
-
-  .footer-logo-img {
-    height: 80px;
-  }
-
-  .modal-content {
-    width: 95%;
-    padding: 2rem;
-  }
-
-  .modal-content h2 {
-    font-size: 1.5rem;
-  }
-}
-
-@media (max-width: 480px) {
-  nav {
-    padding: 0.6rem 0.8rem;
-  }
-
-  .nav-logo {
-    min-width: 35px;
-  }
-
-  .nav-logo-img {
-    height: 35px;
-  }
-
-  .nav-links {
-    display: none;
-  }
-
-  .hero {
-    min-height: auto;
-    padding: 5rem 1rem 2rem;
-  }
-
-  .hero h1 {
-    font-size: clamp(1.5rem, 5vw, 2.5rem);
-    margin-bottom: 1rem;
-  }
-
-  .hero p {
-    font-size: 0.9rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .hero-badge {
-    font-size: 0.7rem;
-    padding: 0.3rem 0.8rem;
-  }
-
-  .hero-actions {
-    flex-direction: column;
-  }
-
-  .btn-primary,
-  .btn-secondary {
-    font-size: 0.9rem;
-    padding: 0.75rem 1.5rem;
-  }
-
-  .stats {
-    gap: 1rem;
     padding: 1.5rem;
   }
 
@@ -1252,11 +1108,68 @@ html {
   }
 
   .stat-label {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Celulares pequeños */
+@media (max-width: 480px) {
+  nav {
+    padding: 0.6rem 0.8rem;
+    gap: 0.5rem;
   }
 
-  .search-section {
-    padding: 2rem 0.8rem 1.5rem;
+  .nav-logo-img {
+    height: 35px;
+  }
+
+  .nav-links {
+    gap: 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  .nav-links a {
+    font-size: 0.8rem;
+  }
+
+  .nav-btn-login, 
+  .nav-btn-register,
+  .nav-btn-logout {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .nav-cta {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+  }
+
+  .user-greeting {
+    font-size: 0.8rem;
+  }
+
+  .hero {
+    padding: 5rem 1rem 2rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.5rem, 5vw, 3rem);
+    margin-bottom: 1rem;
+  }
+
+  .hero p {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-actions {
+    gap: 0.5rem;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 0.7rem 1.5rem;
+    font-size: 0.9rem;
   }
 
   .section-title {
@@ -1264,78 +1177,56 @@ html {
   }
 
   .section-sub {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
   }
 
-  .destinos-section {
-    padding: 1.5rem 0.8rem 2rem;
+  .stats {
+    gap: 1rem;
+    padding: 1.2rem;
+  }
+
+  .stat-num {
+    font-size: 1.2rem;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+  }
+
+  .search-bar {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .search-bar input,
+  .search-bar select,
+  .search-bar button {
+    width: 100%;
   }
 
   .destinos-grid {
+    gap: 1rem;
+  }
+
+  .hospedaje-grid {
     grid-template-columns: 1fr;
-    gap: 0.8rem;
-  }
-
-  .card-img {
-    height: 120px;
-  }
-
-  .card-title {
-    font-size: 1rem;
-  }
-
-  .card-region {
-    font-size: 0.75rem;
-  }
-
-  .card-meta {
-    flex-direction: column;
-    align-items: flex-start;
   }
 
   .clima-grid {
-    grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
 
   .clima-card {
     padding: 1rem;
   }
 
-  .big-icon {
-    font-size: 1.8rem;
-    margin-bottom: 0.5rem;
-  }
-
   .info-inner {
-    gap: 0.8rem;
+    gap: 1.5rem;
     grid-template-columns: 1fr;
   }
 
-  .info-icon {
-    font-size: 1.5rem;
-  }
-
-  .info-card h4 {
-    font-size: 0.95rem;
-  }
-
-  .modal-content {
-    width: 98%;
-    padding: 1.5rem;
-  }
-
-  .modal-content h2 {
-    font-size: 1.3rem;
-    margin-bottom: 1rem;
-  }
-
-  .modal-content input {
-    padding: 0.75rem 0.8rem;
-    font-size: 0.9rem;
-  }
-
-  .btn-modal-submit {
-    padding: 0.8rem 1.2rem;
-    font-size: 0.9rem;
+  .footer-logo-img {
+    height: 60px;
   }
 }
